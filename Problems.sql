@@ -115,7 +115,6 @@ UPDATE salary
 SET sex  = (CASE WHEN sex = 'm' THEN  'f' ELSE 'm' 
     			END)
 
---Locked Questions:
 --579. Find Cumulative Salary of an Employee
 SELECT
     E1.id,
@@ -139,19 +138,95 @@ FROM
         AND E3.month = E1.month - 2)
 ORDER BY id ASC , month DESC
 
---615. Average Salary: Departments VS Company
- 
-
 --614. Second Degree Follower 
 Select f1.follower, count(distinct f2.follower) as num
 from follow f1,follow f2 on f1.follower = f2.followee
 Group by f1.follower
 
 --578. Get Highest Answer Rate Question
+select question_id, SUM(CASE when action = 'answer' then 1 END as num_ans)/SUM(CASE when action = 'show' then 1 END as num_show)
+from survey_log
+group by question_id
 
+--574. Winning Candidate 
+select Name 
+from Candidate c, (
+select candidateId,count(candidateId) as cnt 
+from Vote
+group by candidateId
+order by cnt DESC
+limit 1) as v
+where c.id = v.CandidateId 
 
+--580. Count Student Number in Departments 
+select d.dept_name, s.cnt
+from department d left outer join 
+(select count(dept_id) as cnt,dept_id from student 
+ group by dept_id) as s
+on s.dept_id = d.dept_id
 
+--602. Friend Requests II: Who Has Most Friend?
+select ids, count(ids) as num
+from 
+(select requester_id as ids from request_accepted
+union all
+select accepter_id from request_accepted) as u
+group by ids
+order by num DESC
+limit 1
 
+--585. Investments in 2016
+SELECT
+    SUM(insurance.TIV_2016) AS TIV_2016
+FROM
+    insurance
+WHERE
+    insurance.TIV_2015 IN
+    (
+      SELECT
+        TIV_2015
+      FROM
+        insurance
+      GROUP BY TIV_2015
+      HAVING COUNT(*) > 1
+    )
+    AND CONCAT(LAT, LON) IN
+    (
+      SELECT
+        CONCAT(LAT, LON)
+      FROM
+        insurance
+      GROUP BY LAT , LON
+      HAVING COUNT(*) = 1 //rows which appear only once.
+    )
 
+--612. Shortest Distance in a Plane
+SELECT
+    ROUND(SQRT(MIN((POW(p1.x - p2.x, 2) + POW(p1.y - p2.y, 2)))), 2) AS shortest
+FROM
+    point_2d p1
+        JOIN
+    point_2d p2 ON p1.x != p2.x OR p1.y != p2.y;  
+
+--608. Tree Node  
+select id, 
+CASE when pid is Null then 'root' 
+     when id in (select pid from tree) then 'inner'
+     else 'leaf'
+END as Type
+from tree;
+
+--570. Managers with at Least 5 Direct Reports 
+SELECT
+    Name
+FROM
+    Employee AS t1 JOIN
+    (SELECT
+        ManagerId
+    FROM
+        Employee
+    GROUP BY ManagerId
+    HAVING COUNT(ManagerId) >= 5) AS t2
+    ON t1.Id = t2.ManagerId;  
 
 
