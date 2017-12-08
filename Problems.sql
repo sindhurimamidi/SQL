@@ -116,15 +116,11 @@ SET sex  = (CASE WHEN sex = 'm' THEN  'f' ELSE 'm'
     			END)
 
 --579. Find Cumulative Salary of an Employee
-SELECT
-    E1.id,
-    E1.month,
+SELECT E1.id, E1.month,
     (IFNULL(E1.salary, 0) + IFNULL(E2.salary, 0) + IFNULL(E3.salary, 0)) AS Salary
 FROM
-    (SELECT
-        id, MAX(month) AS month
-    FROM
-        Employee
+    (SELECT id, MAX(month) AS month
+    FROM Employee
     GROUP BY id
     HAVING COUNT(*) > 1) AS maxmonth
         LEFT JOIN
@@ -176,37 +172,24 @@ order by num DESC
 limit 1
 
 --585. Investments in 2016
-SELECT
-    SUM(insurance.TIV_2016) AS TIV_2016
-FROM
-    insurance
-WHERE
-    insurance.TIV_2015 IN
-    (
-      SELECT
-        TIV_2015
-      FROM
-        insurance
+SELECT SUM(insurance.TIV_2016) AS TIV_2016
+FROM insurance
+WHERE insurance.TIV_2015 IN
+    (SELECT TIV_2015
+      FROM insurance
       GROUP BY TIV_2015
-      HAVING COUNT(*) > 1
-    )
+      HAVING COUNT(*) > 1)
     AND CONCAT(LAT, LON) IN
-    (
-      SELECT
-        CONCAT(LAT, LON)
-      FROM
-        insurance
+    (SELECT CONCAT(LAT, LON)
+      FROM insurance
       GROUP BY LAT , LON
-      HAVING COUNT(*) = 1 //rows which appear only once.
-    )
+      HAVING COUNT(*) = 1 //rows which appear only once.)
 
 --612. Shortest Distance in a Plane
-SELECT
-    ROUND(SQRT(MIN((POW(p1.x - p2.x, 2) + POW(p1.y - p2.y, 2)))), 2) AS shortest
-FROM
-    point_2d p1
-        JOIN
-    point_2d p2 ON p1.x != p2.x OR p1.y != p2.y;  
+SELECT ROUND(SQRT(MIN((POW(p1.x - p2.x, 2) + POW(p1.y - p2.y, 2)))), 2) AS shortest
+FROM point_2d p1
+JOIN point_2d p2 
+ON p1.x != p2.x OR p1.y != p2.y;  
 
 --608. Tree Node  
 select id, 
@@ -217,14 +200,10 @@ END as Type
 from tree;
 
 --570. Managers with at Least 5 Direct Reports 
-SELECT
-    Name
-FROM
-    Employee AS t1 JOIN
-    (SELECT
-        ManagerId
-    FROM
-        Employee
+SELECT Name
+FROM Employee AS t1 JOIN
+    (SELECT ManagerId
+    FROM Employee
     GROUP BY ManagerId
     HAVING COUNT(ManagerId) >= 5) AS t2
     ON t1.Id = t2.ManagerId;  
