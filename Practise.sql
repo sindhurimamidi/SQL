@@ -118,3 +118,17 @@ from customer
 where name = 'samony') c
 on c.id = o.cust_id
 
+#f. When was the earliest and latest order made to Samony?
+select o.order_date 
+from orders o
+join 
+(select name, id
+from customer 
+where name = ‘samony’) c
+on c.id = o.cust_id
+
+#g. percentage  of customer’s id with industry_type ‘J’
+select round(sum(id)/(select sum(id) from customer)*100,2)
+from customer
+where industry_type = ‘J’
+group by industry_type 
