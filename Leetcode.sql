@@ -52,6 +52,20 @@ from Employee as e, Department as d
 where e.DepartmentId=d.id
 and (DepartmentId,Salary) in (SELECT DepartmentId,max(Salary) as max FROM Employee GROUP BY DepartmentId)
 
+--185. Department Top 3 Salaries
+select 
+    D.Name as Department, 
+    E.Name as Employee,
+    E.Salary as Salary
+from
+    (select Name,Salary,DepartmentId, row_number() over (partition by DepartmentId order by Salary Desc) as rn
+     from Employee
+     group by Name,Salary,DepartmentId) as E
+join (select Id, Name 
+      from Department) as D
+on E.DepartmentId = D.Id
+where E.rn < = 3
+
 --196. Delete Duplicate Emails
 Delete p
 from Person p,Person q
