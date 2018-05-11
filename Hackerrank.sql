@@ -94,17 +94,19 @@ Genres_movies
 	5  2(GoldenEye) 2(Adventure)
 	6  2(GoldenEye) 16(Thriller)
 */
-select g.name as genre_name,
-       avg(gm.count_genres) as avg_count
-from ((select movie_id, 
-	      count(*) as count_genres
-       from genres_movies 
-       group by movie_id) as gm
-       join 
-       (select id, 
-	       name
-	from genres) as g 
-        on g.id = gm.genre_id)
+select g.name as genre_name,  
+          avg(genres_count) as avg_count
+from genres_movies as n
+join 
+    (select movie_id, 
+                count(genre_id) as genres_count
+      from genres_movies
+      group by movie_id) as gm
+on gm.movie_id = n.movie_id
+join
+    genres as g
+on n.genre_id = g.id
 group by g.name
-order by avg_count
+order by avg_count desc
+
 
