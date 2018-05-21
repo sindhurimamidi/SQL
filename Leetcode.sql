@@ -274,3 +274,153 @@ FROM Employee AS t1 JOIN
      GROUP BY ManagerId
      HAVING COUNT(ManagerId) >= 5) AS t2
      ON t1.Id = t2.ManagerId;  
+
+/* LOCKED QUESTIONS */
+
+-- 613. Shortest Distance in a Line
+/* Table point holds the x coordinate of some points on x-axis in a plane, which are all integers.
+Write a query to find the shortest distance between two points in these points.
+| x   |
+|-----|
+| -1  |
+| 0   |
+| 2   | */
+select min(p2.x-p1.x) as shortest
+from point p1
+join point p2
+on p1.x < p2.x;
+
+--584. Find Customer Referee
+/* 
+Given a table customer holding customers information and the referee.
++------+------+-----------+
+| id   | name | referee_id|
++------+------+-----------+
+|    1 | Will |      NULL |
+|    2 | Jane |      NULL |
+|    3 | Alex |         2 |
+|    4 | Bill |      NULL |
+|    5 | Zack |         1 |
+|    6 | Mark |         2 |
++------+------+-----------+
+Write a query to return the list of customers NOT referred by the person with id '2'.
+For the sample data above, the result is:
++------+
+| name |
++------+
+| Will |
+| Jane |
+| Bill |
+| Zack |
++------+
+*/
+select name 
+from customer
+where referee_id != 2 
+   or referee_id is NULL;
+ 
+--586. Customer Placing the Largest Number of Orders
+/*
+Query the customer_number from the orders table for the customer who has placed the largest number of orders.
+It is guaranteed that exactly one customer will have placed more orders than any other customer.
+The orders table is defined as follows:
+| Column            | Type      |
+|-------------------|-----------|
+| order_number (PK) | int       |
+| customer_number   | int       |
+| order_date        | date      |
+| required_date     | date      |
+| shipped_date      | date      |
+| status            | char(15)  |
+| comment           | char(200) |
+*/
+SELECT
+    customer_number
+FROM
+    orders
+GROUP BY customer_number
+ORDER BY COUNT(*) DESC
+LIMIT 1
+;
+
+--610. Triangle Judgement
+/*
+A pupil Tim gets homework to identify whether three line segments could possibly form a triangle.
+However, this assignment is very heavy because there are hundreds of records to calculate.
+Could you help Tim by writing a query to judge whether these three sides can form a triangle, assuming table triangle holds the length of the three sides x, y and z.
+| x  | y  | z  |
+|----|----|----|
+| 13 | 15 | 30 |
+| 10 | 20 | 15 |
+*/
+select 
+   x,y,z,
+   case
+      when (x+y>z and x+z>y and z+y>x ) then 'Yes'
+      else 'No'
+   end as triangle
+from triangle
+
+--603. Consecutive Available Seats
+/*
+Several friends at a cinema ticket office would like to reserve consecutive available seats.
+Can you help to query all the consecutive available seats order by the seat_id using the following cinema table?
+| seat_id | free |
+|---------|------|
+| 1       | 1    |
+| 2       | 0    |
+| 3       | 1    |
+| 4       | 1    |
+| 5       | 1    |
+*/
+select distinct c1.seat_id
+from cinema c1, cinema c2
+where c1.free = '1' and c2.free = '1' and abs(c2.seat_id - c1.seat_id) = 1
+order by c1.seat_id;
+
+--607. Sales Person
+/* Given three tables: 
+   salesperson: sales_id | name | salary  | commission_rate | hire_date
+   company:      com_id  | name | city   
+   orders:      order_id | date | com_id  | sales_id | amount
+   Output all the names in the table salesperson, who didn’t have sales to company 'RED'.*/
+select s.name 
+from salesperson s
+where s.sales_id not in (select o.sales_id
+                         from orders o
+                         join company c
+                          on c.com_id= o.com_id
+                         where c.name = 'RED')
+--577. Employee Bonus
+/* Select all employee's name and bonus whose bonus is < 1000.
+   Employee: empId |  name  | supervisor| salary 
+   Bonus:    empId | bonus 
+*/
+select e.name as name, b.bonus as bonus
+from employee e
+left join bonus b
+on e.empId=b.empId
+where b.bonus < 1000 or b.bonus is NULL
+
+--597. Friend Requests I: Overall Acceptance Rate
+/* In social network like Facebook or Twitter, people send friend requests and accept others’ requests as well. 
+   Now given two tables as below, Write a query to find the overall acceptance rate of requests rounded to 2 decimals, 
+   which is the number of acceptance divide the number of requests.
+   friend_request:      sender_id | send_to_id  |request_date
+   request_accepted: requester_id | accepter_id |accept_date 
+*/
+select round(
+            ifnull((select count(*) from (select distinct requester_id,accepter_id from request_accepted) B)/
+                   (select count(*) from (select distinct sender_id,send_to_id from friend_request) A), 
+		 0),
+            2) as accept_rate;
+	    
+--619. Biggest Single Number 
+/* Table number contains many numbers in column num including duplicated ones.
+  Can you write a SQL query to find the biggest number, which only appears once.*/
+select max(n.num) as num
+from (select num
+      from number
+      group by num
+      having count(num) = 1) n
+   
