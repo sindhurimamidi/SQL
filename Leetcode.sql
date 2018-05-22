@@ -8,9 +8,11 @@ SQL tips:
 4. union all for duplicates, union for set.
 5. if(condition, then, else)
 6. case when  A then a
-          when B then b
-          else c
-       end 
+        when B then b
+        else c
+   end 
+ 7. aggregate: avg,sum, min, max,count
+ 8. math: floor, pow(num,2) , round(num,2), abs, sqrt, square
 */
 
 --175. Combine Two Tables 
