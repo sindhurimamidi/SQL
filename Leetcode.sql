@@ -1,3 +1,18 @@
+/*
+SQL tips:
+1. join : between A and B
+        : A < B 
+	: A != B gets all permutations and combinations.
+2. “is NULL” —> use left/right joins to get null values and use this condition in where clause.
+3. row_number over (partition by A order by B ) rn
+4. union all for duplicates, union for set.
+5. if(condition, then, else)
+6. case when  A then a
+          when B then b
+          else c
+       end 
+*/
+
 --175. Combine Two Tables 
 select p.FirstName, 
        p.LastName,
@@ -424,3 +439,82 @@ from (select num
       group by num
       having count(num) = 1) n
    
+/* MEDIUM */
+--570. Managers with at Least 5 Direct Reports
+/* The Employee table holds all employees including their managers. Every employee has an Id, and there is also a column for the manager Id.
+   |Id  |Name  |Department |ManagerId 
+   Given the Employee table, write a SQL query that finds out managers with at least 5 direct report. */
+select name 
+from Employee e1
+join  (select ManagerId
+       from Employee 
+       group by ManagerId
+       having count(*) >=5) e2
+on e1.Id = e2.ManagerId
+       
+--612. Shortest Distance in a Plane
+/* Table point_2d holds the coordinates (x,y) of some unique points (more than two) in a plane.
+   Write a query to find the shortest distance between these points rounded to 2 decimals */
+SELECT ROUND(SQRT(MIN((POW(p1.x - p2.x, 2) + POW(p1.y - p2.y, 2)))), 2) AS shortest
+FROM point_2d p1
+JOIN point_2d p2 ON p1.x != p2.x OR p1.y != p2.y;
+
+--602. Friend Requests II: Who Has the Most Friends
+/* In social network like Facebook or Twitter, people send friend requests and accept others' requests as well.
+  Table request_accepted holds the data of friend acceptance, while requester_id and accepter_id both are the id of a person.
+  request_accepted: requester_id | accepter_id | accept_date| */
+select t.id as id, count(*) as num
+from (select requester_id as id from request_accepted 
+      union all 
+      select accepter_id as id from request_accepted ) as t
+group by t.id
+order by count(*) desc
+limit 1
+
+--580. Count Student Number in Departments
+/* A university uses 2 data tables, student and department, to store data about its students and the departments associated with each major.
+Write a query to print the respective department name and number of students majoring in each department for all departments in the department table (even ones with no current students).
+Sort your results by descending number of students; if two or more departments have the same number of students, then sort those departments alphabetically by department name.
+where student_id is the student's ID number, student_name is the student's name, gender is their gender, and dept_id is the department ID associated with their declared major.
+where dept_id is the department's ID number and dept_name is the department name.
+Student :   Column Name | Type  
+Department: Column Name | Type  
+*/
+select d.dept_name,count(s.dept_id) as student_number
+from student s
+right outer join department d
+on s.dept_id = d.dept_id
+group by d.dept_name,s.dept_id
+order by count(s.dept_id) desc,d.dept_name
+
+--574. Winning Candidate
+/* Candidate: id  | Name 
+   Vote:      id  | CandidateId 
+   Write a sql to find the name of the winning candidate, the above example will return the winner B. */
+select name 
+from Candidate
+where id=(select CandidateId
+          from Vote 
+          group by CandidateId
+          order by count(CandidateId) desc
+          limit 1)
+	  
+--578. Get Highest Answer Rate Question
+/* Get the highest answer rate question from a table survey_log with these columns: uid, action, question_id, answer_id, q_num, timestamp.
+uid means user id; action has these kind of values: "show", "answer", "skip"; answer_id is not null when action column is "answer", 
+while is null for "show" and "skip"; q_num is the numeral order of the question in current session.
+Write a sql query to identify the question which has the highest answer rate.
+The highest answer rate meaning is: answer number's ratio in show number in the same question. */
+select t.question_id as survey_log
+from (select question_id,
+        sum(case when action='answer' then 1 else 0 end)/sum(case when action='show' then 1 else 0 end) as ans_rate
+from survey_log
+group by 1) t
+order by ans_rate desc
+limit 1
+-- alternate using if
+select 
+   question_id,
+   sum(if (action='answer',1,0))/sum(if (action='show',1,0)) as ans_rate
+from survey_log
+group by 1
