@@ -4,6 +4,7 @@ SQL tips:
         : A < B 
 	: A != B gets all permutations and combinations.
 2. “is NULL” —> use left/right joins to get null values and use this condition in where clause.
+    IFNULL(A, 0)
 3. row_number over (partition by A order by B ) rn
 4. union all for duplicates, union for set.
 5. if(condition, then, else)
@@ -13,6 +14,7 @@ SQL tips:
    end 
  7. aggregate: avg,sum, min, max,count
  8. math: floor, pow(num,2) , round(num,2), abs, sqrt, square
+ 9. Where condition on 2 variables: a,b in (select a,b from table)
 */
 
 --175. Combine Two Tables 
