@@ -522,3 +522,37 @@ select
    sum(if (action='answer',1,0))/sum(if (action='show',1,0)) as ans_rate
 from survey_log
 group by 1
+					 
+/* Given a session with userid, url visited and timestamp, create a new table with only one entry per session with 10 mins for a given user.
+For ex:
+userid  Timestamp         url 
+1000    11-11-2018 10:00  google.com
+1000    11-11-2018 10:02  google.com
+1000    11-11-2018 10:04  google.com
+1000    11-11-2018 01:00  google.com
+1000    11-12-2018 10:00  fb.com
+
+should return:
+sessionid userid timestamp          url
+1    	  1000  11-11-2018 10:00  google.com
+2         1000  11-11-2018 01:00  google.com
+3         1000  11-12-2018 10:00  fb.com					 
+*/			 
+
+select 
+  user_id,
+  case 
+    when (current_date-prev_date) < 10 then '0'
+    else '1'
+  end as flag
+from
+(SELECT
+    user_id,
+    url,
+    Timestamp as current_date,
+    LAG(Timestamp,1) OVER(PARTITION BY user_id ORDER BY Timestamp ASC) as prev_date
+ from table)
+where flag = 1;
+					 
+					 
+					 
