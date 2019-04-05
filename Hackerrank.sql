@@ -253,4 +253,47 @@ from(
   order by Name
 ) Temp
 group by RowNumber
-			     
+
+/* Amber's conglomerate corporation just acquired some new companies. Each of the companies follows this hierarchy: Founder > LM > SM > M > E 
+write a query to print the company_code, founder name, total number of lead managers, total number of senior managers, total number of managers, and total number of employees. 
+Order your output by ascending company_code.The tables may contain duplicate records.
+The company_code is string, so the sorting should not be numeric.For example, if the company_codes are C_1, C_2, and C_10, then the ascending company_codes will be C_1, C_10, and C_2.
+Tables:
+company - company_code, founder
+lead_manager - lead_manager_code, company_code
+senior_manager - senior_manager_code, lead_manager_code, company_code
+Manager - manager_code, senior_manager_code, lead_manager_code, company_code.
+Employee - employee_code, manager_code, senior_manager_code, lead_manager_code, company_code */			  
+Select 
+  c.company_code, 
+  c.founder,
+  count(distinct l.lead_manager_code),
+  count(distinct s.senior_manager_code),
+  count(distinct m.manager_code),
+  count(distinct e.employee_code)
+From company as c
+Join lead_manager as l 
+On c.company_code = l.company_code 
+Join senior_manager as s
+On l.lead_manager_code = s.lead_manager_code
+Join manager as m
+On m.senior_manager_code = s.senior_manager_code
+Join employee as e
+On e.manager_code = m.manager_code
+group by 1,2
+order by c.company_code;
+
+/* You are given a table, BST, containing two columns: N and P, where N represents the value of a node in Binary Tree, and P is the parent of N. 
+Write a query to find the node type of Binary Tree ordered by the value of the node. Output one of the following for each node:
+Root: If node is root node.
+Leaf: If node is leaf node.
+Inner: If node is neither root nor leaf node.
+*/
+select N,
+ case
+  when P is null then 'Root'
+  when N in (select P from BST) then 'Inner'
+  else 'Leaf'
+ end as node
+from BST
+order by N
