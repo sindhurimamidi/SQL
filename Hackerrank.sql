@@ -288,6 +288,7 @@ Write a query to find the node type of Binary Tree ordered by the value of the n
 Root: If node is root node.
 Leaf: If node is leaf node.
 Inner: If node is neither root nor leaf node.
+Table BST - N, P
 */
 select N,
  case
@@ -297,3 +298,44 @@ select N,
  end as node
 from BST
 order by N
+
+/* Samantha was tasked with calculating the average monthly salaries for all employees in the EMPLOYEES table, but did not realize her keyboard's 0 key was broken until after completing the calculation. 
+She wants your help finding the difference between her miscalculation (using salaries with any zeroes removed), and the actual average salary.
+Write a query calculating the amount of error (i.e.: actual - miscalculated average monthly salaries), and round it up to the next integer. */			     
+select CEIL(avg(salary)-avg(replace(CAST(salary as CHAR(10)),'0','')))
+from employees
+							
+/* We define an employee's total earnings to be their monthly salary x months worked, and the maximum total earnings to be the maximum total earnings for any employee in the Employee table. 
+Write a query to find the maximum total earnings for all employees as well as the total number of employees who have maximum total earnings. 
+Then print these values as  space-separated integers. 
+employee - id,name,salary,month */
+select (salary * months) as earnings ,count(*) 
+from employee 
+group by 1 
+order by earnings desc 
+limit 1
+
+/* A median is defined as a number separating the higher half of a data set from the lower half. 
+Query the median of the Northern Latitudes (LAT_N) from STATION and round your answer to 4 decimal places.
+Station :id,city,state,lat_n,long_w */					
+select round(S.LAT_N,4) as median 
+from station S 
+where (select count(Lat_N) 
+       from station 
+       where Lat_N < S.LAT_N ) = (select count(Lat_N) 
+                                  from station 
+                                  where Lat_N > S.LAT_N)							
+							
+/* Query the two cities in STATION with the shortest and longest CITY names, as well as their respective lengths (i.e.: number of characters in the name). 
+If there is more than one smallest or largest city, choose the one that comes first when ordered alphabetically.
+Station :id,city,state,lat_n,long_w */
+select city, length(city)
+from station
+order by length(city), city asc
+limit 1;
+select city, length(city)
+from station
+order by length(city) desc
+limit 1;							
+							
+							
