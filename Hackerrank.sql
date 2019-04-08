@@ -376,5 +376,16 @@ order by grade desc, name
    Challenges: challenge_id, hacker_id, difficulty_level
    Submissions: submission_id, hacker_id, challenge_id, score						
 */
-							
+select 
+  h.name,
+  h.hacker_id
+from hackers h
+join (Submissions s, Challenges c, difficulty d)
+  on (s.hacker_id = h.hacker_id
+  and c.difficulty_level = d.difficulty_level
+  and c.challenge_id = s.challenge_id)
+where s.score = d.score
+group by 1,2
+having count(*) > 1
+order by count(*) desc, h.hacker_id 							
 							
