@@ -437,3 +437,26 @@ order by n.power desc,n.age desc;
                 group by t.c
                 having count(t.c) = 1)
   Order by count(c.challenge_id) desc, h.hacker_id;
+
+/* You did such a great job helping Julia with her last coding contest challenge that she wants you to work on this one, too!
+   The total score of a hacker is the sum of their maximum scores for all of the challenges. Write a query to print the hacker_id, name, and total score of the hackers ordered by the descending score.
+   If more than one hacker achieved the same total score, then sort the result by ascending hacker_id. Exclude all hackers with a total score of 0 from your result.
+   Hackers - hacker_id,name
+   submissions - submission_id,hacker_id,challenge_id,score
+*/
+select h.hacker_id,h.name,m.score
+from hackers h
+join
+(select 
+  hacker_id,
+  sum(t.ms) score
+from(select 
+       max(score) as ms,
+       challenge_id,
+       hacker_id
+     from submissions 
+     group by challenge_id,hacker_id)t
+group by hacker_id) m 
+on h.hacker_id = m.hacker_id
+where m.score != 0
+order by m.score desc, h.hacker_id
