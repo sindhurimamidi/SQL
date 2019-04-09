@@ -389,3 +389,51 @@ group by 1,2
 having count(*) > 1
 order by count(*) desc, h.hacker_id 							
 							
+/* Harry Potter and his friends are at Ollivander's with Ron, finally replacing Charlie's old broken wand.
+   Hermione decides the best way to choose is by determining the minimum number of gold galleons needed to buy each non-evil wand of high power and age.
+   Write a query to print the id, age, coins_needed, and power of the wands that Ron's interested in, sorted in order of descending power. If more than one wand has same power, sort the result in order of descending age.
+   wands:id,code,coins_needed,power
+   wands_property:code,is_evil,age
+*/
+select n.id, n.age,n.coins_needed,n.power
+from
+   (select 
+      w.id, 
+      wp.age, 
+      w.coins_needed,
+      w.power,
+      row_number() over(partition by wp.age,w.power order by w.coins_needed ) rn
+    from wands w
+    join wands_property wp
+      on w.code = wp.code
+    where wp.is_evil = 0) n
+where n.rn =1
+order by n.power desc,n.age desc;
+
+/* Julia asked her students to create some coding challenges. Write a query to print the hacker_id, name, 
+   and the total number of challenges created by each student. Sort your results by the total number of challenges in descending order. 
+   If more than one student created the same number of challenges, then sort the result by hacker_id. If more than one student created the 
+   same number of challenges and the count is less than the maximum number of challenges created, then exclude those students from the result.
+   Hackers: hacker_id,name
+   Challengers: challenge_id,hacker_id
+*/
+  Select 
+    h.hacker_id,
+    h.name,
+    count(c.challenge_id) as ch
+  From hackers h
+  Join challenges c
+    On c.hacker_id = h.hacker_id
+  Group by h.hacker_id,h.name
+  having count(c.challenge_id) = (select max(m.c)
+               from (select count(challenge_id) as c
+                     from challenges
+                     group by hacker_id) m)
+       or count(c.challenge_id) in 
+	       (select t.c
+                from (select count(*) as c 
+                      from challenges
+                      group by hacker_id) t
+                group by t.c
+                having count(t.c) = 1)
+  Order by count(c.challenge_id) desc, h.hacker_id;
