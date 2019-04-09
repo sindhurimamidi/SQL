@@ -7,7 +7,6 @@
    Write a query to output the start and end dates of projects listed by the number of days it took to complete the project in ascending order. 
    If there is more than one project that have the same number of completion days, then order by the start date of the project.
 */
-
 SELECT Start_Date, End_Date
 FROM 
     (SELECT Start_Date FROM Projects WHERE Start_Date NOT IN (SELECT End_Date FROM Projects)) a,
@@ -43,7 +42,6 @@ LIMIT 1;
    If two or more students both have names ending in the same last three characters (i.e.: Bobby, Robby, etc.), secondary sort them by ascending ID.
    STUDENTS  : ID, name , marks. 
 */
-
 select name
 from students
 where marks > 75
@@ -153,7 +151,6 @@ order by grade desc, s.name;
    challenges:    challenge_id,hacker_id, difficulty_level
    submissions:  submission_id,hacker_id,challenge_id,score
 */
-
 select h.hacker_id, h.name
 from submissions s
 join challenges c
@@ -229,7 +226,12 @@ order by c_count desc, h.hacker_id;
 
 /* Advanced select */
 --------------------
-/* The PADS */	
+/* Generate the following two result sets:
+   Query an alphabetically ordered list of all names in OCCUPATIONS, immediately followed by the first letter of each profession as a parenthetical (i.e.: enclosed in parentheses). For example: AnActorName(A), ADoctorName(D), AProfessorName(P), and ASingerName(S).
+   Query the number of ocurrences of each occupation in OCCUPATIONS. Sort the occurrences in ascending order, and output them in the following format: 
+   There are a total of [occupation_count] [occupation]s.
+   where [occupation_count] is the number of occurrences of an occupation in OCCUPATIONS and [occupation] is the lowercase occupation name. If more than one Occupation has the same [occupation_count], they should be ordered alphabetically.
+*/	
 select concat(name,'(',left(occupation,1),')')
 from occupations
 order by name;
@@ -296,7 +298,7 @@ order by c.company_code;
    Root: If node is root node.
    Leaf: If node is leaf node.
    Inner: If node is neither root nor leaf node.
-    Table BST - N, P
+   Table BST - N, P
 */
 select N,
  case
