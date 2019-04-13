@@ -109,14 +109,7 @@ from salesperson s
 join (select amount,salesperson_id
 from orders
 where amount > 1400) o
-on s.id = o.salesperson_id  f. When was the earliest and latest order made to Samony?
-select o.order_date 
-from orders o
-join 
-(select name, id
-from customer 
-where name = 'samony') c
-on c.id = o.cust_id
+on s.id = o.salesperson_id
 
 #f. When was the earliest and latest order made to Samony?
 select o.order_date 
