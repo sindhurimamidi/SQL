@@ -32,6 +32,13 @@ from Employee
 where salary < (select max(salary) 
 		from Employee)
 
+-- Employee name with Second highest Salary
+SELECT name, salary 
+FROM employees e
+WHERE 2=(SELECT COUNT(DISTINCT salary) 
+         FROM employees p 
+         WHERE e.salary<=p.salary)
+
 --177. Nth Highest Salary
 Select salary 
 from (Select Salary, 
