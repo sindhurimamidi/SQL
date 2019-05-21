@@ -16,6 +16,8 @@ SQL tips:
  8. math: floor, pow(num,2) , round(num,2), abs, sqrt, square
  9. Where condition on 2 variables: a,b in (select a,b from table)
  10. LAG(col,1) over (partition by col2 order by col3 asc) --> LAG or LEAD
+ 11. Window functions: over() partion by -- order by -- etc.
+ 12: CTE(common table expressions): With table_name as (select * from table) --> creates a view.
 */
 
 --175. Combine Two Tables 
