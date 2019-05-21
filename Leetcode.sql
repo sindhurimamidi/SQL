@@ -15,6 +15,7 @@ SQL tips:
  7. aggregate: avg,sum, min, max,count
  8. math: floor, pow(num,2) , round(num,2), abs, sqrt, square
  9. Where condition on 2 variables: a,b in (select a,b from table)
+ 10. LAG(col,1) over (partition by col2 order by col3 asc) --> LAG or LEAD
 */
 
 --175. Combine Two Tables 
