@@ -578,6 +578,10 @@ from
     LAG(Timestamp,1) OVER(PARTITION BY user_id ORDER BY Timestamp ASC) as prev_date
  from table)
 where flag = 1;
-					 
+		
+-- Check for item in an array.					 
+select *
+from
+where contains(item,element)
 					 
 					 
