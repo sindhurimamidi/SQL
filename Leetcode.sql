@@ -584,4 +584,752 @@ select *
 from
 where contains(item,element)
 					 
+---534. Game Play Analysis III
+/* Write an SQL query that reports for each player and date, how many games played so far by the player. 
+ That is, the total number of games played by the player until that date. Check the example for clarity.
+The query result format is in the following example:
+Activity table:
++-----------+-----------+------------+--------------+
+| player_id | device_id | event_date | games_played |
++-----------+-----------+------------+--------------+
+| 1         | 2         | 2016-03-01 | 5            |
+| 1         | 2         | 2016-05-02 | 6            |
+| 1         | 3         | 2017-06-25 | 1            |
+| 3         | 1         | 2016-03-02 | 0            |
+| 3         | 4         | 2018-07-03 | 5            |
++-----------+-----------+------------+--------------+
+
+Result table:
++-----------+------------+---------------------+
+| player_id | event_date | games_played_so_far |
++-----------+------------+---------------------+
+| 1         | 2016-03-01 | 5                   |
+| 1         | 2016-05-02 | 11                  |
+| 1         | 2017-06-25 | 12                  |
+| 3         | 2016-03-02 | 0                   |
+| 3         | 2018-07-03 | 5                   |
++-----------+------------+---------------------+
+For the player with id 1, 5 + 6 = 11 games played by 2016-05-02, and 5 + 6 + 1 = 12 games played by 2017-06-25.
+For the player with id 3, 0 + 5 = 5 games played by 2018-07-03.
+Note that for each player we only care about the days when the player logged in. */	
+select a1.player_id, a1.event_date, sum(a2.games_played) as games_played_so_far
+from activity as a1
+inner join activity as a2
+on a1.event_date >= a2.event_date
+and a1.player_id = a2.player_id
+group by  a1.player_id, a1.event_date	
+
+--
+/* Write an SQL query that reports the fraction of players that logged in again on the day after the day they first logged in, 
+ rounded to 2 decimal places. In other words, you need to count the number of players that logged in for at least two consecutive days 
+ starting from their first login date, then divide that number by the total number of players.
+Activity table:
++-----------+-----------+------------+--------------+
+| player_id | device_id | event_date | games_played |
++-----------+-----------+------------+--------------+
+| 1         | 2         | 2016-03-01 | 5            |
+| 1         | 2         | 2016-03-02 | 6            |
+| 2         | 3         | 2017-06-25 | 1            |
+| 3         | 1         | 2016-03-02 | 0            |
+| 3         | 4         | 2018-07-03 | 5            |
++-----------+-----------+------------+--------------+
+
+Result table:
++-----------+
+| fraction  |
++-----------+
+| 0.33      |
++-----------+
+Only the player with id 1 logged back in after the first day he had logged in so the answer is 1/3 = 0.33					 
+*/
+SELECT ROUND(SUM(event_date = min_date + 1)/COUNT(DISTINCT player_id), 2) fraction
+FROM
+(SELECT 
+   player_id, 
+   event_date, 
+   MIN(event_date) OVER (Partition by player_id) min_date 
+ FROM Activity) t
+
+--569. Median Employee Salary
+/* The Employee table holds all employees. The employee table has three columns: Employee Id, Company Name, and Salary.
++-----+------------+--------+
+|Id   | Company    | Salary |
++-----+------------+--------+
+|1    | A          | 2341   |
+|2    | A          | 341    |
+|3    | A          | 15     |
+|4    | A          | 15314  |
+|5    | A          | 451    |
+|6    | A          | 513    |
+|7    | B          | 15     |
+|8    | B          | 13     |
+|9    | B          | 1154   |
+|10   | B          | 1345   |
+|11   | B          | 1221   |
+|12   | B          | 234    |
+|13   | C          | 2345   |
+|14   | C          | 2645   |
+|15   | C          | 2645   |
+|16   | C          | 2652   |
+|17   | C          | 65     |
++-----+------------+--------+
+Write a SQL query to find the median salary of each company. Bonus points if you can solve it without using any built-in SQL functions.
++-----+------------+--------+
+|Id   | Company    | Salary |
++-----+------------+--------+
+|5    | A          | 451    |
+|6    | A          | 513    |
+|12   | B          | 234    |
+|9    | B          | 1154   |
+|14   | C          | 2645   |
++-----+------------+--------+
+*/
+select 
+    t.id as Id,
+    t.company as Company, 
+    salary as Salary
+from
+(select 
+    id, 
+    company, 
+    salary, 
+    row_number()over(partition by company order by salary,Id asc) as sequence,
+    floor((count(id)over(partition by Company ) /2 +1 )) odd_even_count, 
+    (case 
+        when count(id)over(partition by Company ) %2=0 
+        then floor((count(id)over(partition by Company ) /2 )) 
+     end) as even_count 
+ from employee) as t
+where t.sequence in (even_count,odd_even_count)
 					 
+/* MEDIUM */
+--1445. Apples & Oranges
+/*
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| sale_date     | date    |
+| fruit         | enum    | 
+| sold_num      | int     | 
++---------------+---------+
+(sale_date,fruit) is the primary key for this table.
+This table contains the sales of "apples" and "oranges" sold each day.
+
+Write an SQL query to report the difference between number of apples and oranges sold each day.
+
+Return the result table ordered by sale_date in format ('YYYY-MM-DD').
+
+The query result format is in the following example:
+
+Sales table:
++------------+------------+-------------+
+| sale_date  | fruit      | sold_num    |
++------------+------------+-------------+
+| 2020-05-01 | apples     | 10          |
+| 2020-05-01 | oranges    | 8           |
+| 2020-05-02 | apples     | 15          |
+| 2020-05-02 | oranges    | 15          |
+| 2020-05-03 | apples     | 20          |
+| 2020-05-03 | oranges    | 0           |
+| 2020-05-04 | apples     | 15          |
+| 2020-05-04 | oranges    | 16          |
++------------+------------+-------------+
+
+Result table:
++------------+--------------+
+| sale_date  | diff         |
++------------+--------------+
+| 2020-05-01 | 2            |
+| 2020-05-02 | 0            |
+| 2020-05-03 | 20           |
+| 2020-05-04 | -1           |
++------------+--------------+
+
+Day 2020-05-01, 10 apples and 8 oranges were sold (Difference  10 - 8 = 2).
+Day 2020-05-02, 15 apples and 15 oranges were sold (Difference 15 - 15 = 0).
+Day 2020-05-03, 20 apples and 0 oranges were sold (Difference 20 - 0 = 20).
+Day 2020-05-04, 15 apples and 16 oranges were sold (Difference 15 - 16 = -1).
+*/					 
+select s1.sale_date,s1.sold_num-s2.sold_num as diff
+from Sales s1
+join Sales s2
+on s1.sale_date = s2.sale_date and s2.fruit!=s1.fruit
+where s1.fruit = 'apples'
+  and s2.fruit = 'oranges'
+
+--1077. Project Employees III
+/*
+Table: Project
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| project_id  | int     |
+| employee_id | int     |
++-------------+---------+
+(project_id, employee_id) is the primary key of this table.
+employee_id is a foreign key to Employee table.
+					 
+Table: Employee
++------------------+---------+
+| Column Name      | Type    |
++------------------+---------+
+| employee_id      | int     |
+| name             | varchar |
+| experience_years | int     |
++------------------+---------+
+employee_id is the primary key of this table.
+ 
+Write an SQL query that reports the most experienced employees in each project. In case of a tie, report all employees with the maximum number of experience years.
+The query result format is in the following example:
+
+Project table:
++-------------+-------------+
+| project_id  | employee_id |
++-------------+-------------+
+| 1           | 1           |
+| 1           | 2           |
+| 1           | 3           |
+| 2           | 1           |
+| 2           | 4           |
++-------------+-------------+
+
+Employee table:
++-------------+--------+------------------+
+| employee_id | name   | experience_years |
++-------------+--------+------------------+
+| 1           | Khaled | 3                |
+| 2           | Ali    | 2                |
+| 3           | John   | 3                |
+| 4           | Doe    | 2                |
++-------------+--------+------------------+
+
+Result table:
++-------------+---------------+
+| project_id  | employee_id   |
++-------------+---------------+
+| 1           | 1             |
+| 1           | 3             |
+| 2           | 1             |
++-------------+---------------+
+Both employees with id 1 and 3 have the most experience among the employees of the first project. For the second project, the employee with id 1 has the most experience.
+*/
+select project_id,employee_id
+from(
+select 
+    p.project_id,
+    e.employee_id,
+    e.experience_years,
+    rank() over (partition by p.project_id order by e.experience_years desc)rn
+from Project p
+join Employee e
+on p.employee_id= e.employee_id)u
+where rn=1					 
+	
+-- 1355. Activity Participants
+/* Table: Friends
+
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| id            | int     |
+| name          | varchar |
+| activity      | varchar |
++---------------+---------+
+id is the id of the friend and primary key for this table.
+name is the name of the friend.
+activity is the name of the activity which the friend takes part in.
+Table: Activities
+
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| id            | int     |
+| name          | varchar |
++---------------+---------+
+id is the primary key for this table.
+name is the name of the activity.
+ 
+
+Write an SQL query to find the names of all the activities with neither maximum, nor minimum number of participants.
+
+Return the result table in any order. Each activity in table Activities is performed by any person in the table Friends.
+
+The query result format is in the following example:
+
+Friends table:
++------+--------------+---------------+
+| id   | name         | activity      |
++------+--------------+---------------+
+| 1    | Jonathan D.  | Eating        |
+| 2    | Jade W.      | Singing       |
+| 3    | Victor J.    | Singing       |
+| 4    | Elvis Q.     | Eating        |
+| 5    | Daniel A.    | Eating        |
+| 6    | Bob B.       | Horse Riding  |
++------+--------------+---------------+
+
+Activities table:
++------+--------------+
+| id   | name         |
++------+--------------+
+| 1    | Eating       |
+| 2    | Singing      |
+| 3    | Horse Riding |
++------+--------------+
+
+Result table:
++--------------+
+| activity     |
++--------------+
+| Singing      |
++--------------+
+
+Eating activity is performed by 3 friends, maximum number of participants, (Jonathan D. , Elvis Q. and Daniel A.)
+Horse Riding activity is performed by 1 friend, minimum number of participants, (Bob B.)
+Singing is performed by 2 friends (Victor J. and Jade W.)
+*/
+select a.activity Activity
+from(
+select 
+    count(id) count_number,
+    activity,
+    rank() over(order by count(id) desc) desc_count,
+    rank() over(order by count(id) asc) asc_count
+from Friends 
+group by activity)a
+where a.desc_count!=1 and a.asc_count!=1
+					 					 
+-- Find the missing Id.
+/*+---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| customer_id   | int     |
+| customer_name | varchar |
++---------------+---------+
+customer_id is the primary key for this table.
+Each row of this table contains the name and the id customer.
+Write an SQL query to find the missing customer IDs. The missing IDs are ones that are not in the Customers table but are in the range between 1 and the maximum customer_id present in the table.
+Notice that the maximum customer_id will not exceed 100.
+Return the result table ordered by ids in ascending order.
+The query result format is in the following example.
+ 
+Customers table:
++-------------+---------------+
+| customer_id | customer_name |
++-------------+---------------+
+| 1           | Alice         |
+| 4           | Bob           |
+| 5           | Charlie       |
++-------------+---------------+
+
+Result table:
++-----+
+| ids |
++-----+
+| 2   |
+| 3   |
++-----+
+The maximum customer_id present in the table is 5, so in the range [1,5], IDs 2 and 3 are missing from the table.*/					 
+ WITH RECURSIVE seq AS (
+    SELECT 1 AS value 
+    UNION ALL 
+    SELECT value + 1 
+    FROM seq 
+    WHERE value < (SELECT MAX(customer_id) FROM Customers))
+SELECT DISTINCT s.value AS ids
+FROM seq s, Customers c
+WHERE s.value not in (SELECT customer_id FROM Customers)
+ORDER BY 1 ASC;
+		   
+--Three most recent orders
+/*Table: Customers
+
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| customer_id   | int     |
+| name          | varchar |
++---------------+---------+
+customer_id is the primary key for this table.
+This table contains information about customers.
+ 
+
+Table: Orders
+
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| order_id      | int     |
+| order_date    | date    |
+| customer_id   | int     |
+| cost          | int     |
++---------------+---------+
+order_id is the primary key for this table.
+This table contains information about the orders made by customer_id.
+Each customer has one order per day.
+ 
+
+Write an SQL query to find the most recent 3 orders of each user. If a user ordered less than 3 orders return all of their orders.
+
+Return the result table sorted by customer_name in ascending order and in case of a tie by the customer_id in ascending order. If there still a tie, order them by the order_date in descending order.
+
+The query result format is in the following example:
+
+Customers
++-------------+-----------+
+| customer_id | name      |
++-------------+-----------+
+| 1           | Winston   |
+| 2           | Jonathan  |
+| 3           | Annabelle |
+| 4           | Marwan    |
+| 5           | Khaled    |
++-------------+-----------+
+
+Orders
++----------+------------+-------------+------+
+| order_id | order_date | customer_id | cost |
++----------+------------+-------------+------+
+| 1        | 2020-07-31 | 1           | 30   |
+| 2        | 2020-07-30 | 2           | 40   |
+| 3        | 2020-07-31 | 3           | 70   |
+| 4        | 2020-07-29 | 4           | 100  |
+| 5        | 2020-06-10 | 1           | 1010 |
+| 6        | 2020-08-01 | 2           | 102  |
+| 7        | 2020-08-01 | 3           | 111  |
+| 8        | 2020-08-03 | 1           | 99   |
+| 9        | 2020-08-07 | 2           | 32   |
+| 10       | 2020-07-15 | 1           | 2    |
++----------+------------+-------------+------+
+
+Result table:
++---------------+-------------+----------+------------+
+| customer_name | customer_id | order_id | order_date |
++---------------+-------------+----------+------------+
+| Annabelle     | 3           | 7        | 2020-08-01 |
+| Annabelle     | 3           | 3        | 2020-07-31 |
+| Jonathan      | 2           | 9        | 2020-08-07 |
+| Jonathan      | 2           | 6        | 2020-08-01 |
+| Jonathan      | 2           | 2        | 2020-07-30 |
+| Marwan        | 4           | 4        | 2020-07-29 |
+| Winston       | 1           | 8        | 2020-08-03 |
+| Winston       | 1           | 1        | 2020-07-31 |
+| Winston       | 1           | 10       | 2020-07-15 |
++---------------+-------------+----------+------------+
+Winston has 4 orders, we discard the order of "2020-06-10" because it is the oldest order.
+Annabelle has only 2 orders, we return them.
+Jonathan has exactly 3 orders.
+Marwan ordered only one time.
+We sort the result table by customer_name in ascending order, by customer_id in ascending order and by order_date in descending order in case of a tie.*/
+select customer_name,customer_id,order_id,order_date 
+from(
+select 
+    c.name as customer_name,
+    c.customer_id as customer_id,
+    o.order_id as order_id,
+    o.order_date as order_date,
+    row_number() over (partition by o.customer_id order by o.order_date desc) rn 
+from Customers c
+join Orders o
+on c.customer_id = o.customer_id)p
+where  rn<= 3
+order by customer_name asc,customer_id asc,order_date desc
+
+/* Facebook */
+--1661. Average Time of Process per Machine
+/* Table: Activity
++----------------+---------+
+| Column Name    | Type    |
++----------------+---------+
+| machine_id     | int     |
+| process_id     | int     |
+| activity_type  | enum    |
+| timestamp      | float   |
++----------------+---------+
+The table shows the user activities for a factory website.
+(machine_id, process_id, activity_type) is the primary key of this table.
+machine_id is the ID of a machine.
+process_id is the ID of a process running on the machine with ID machine_id.
+activity_type is an ENUM of type ('start', 'end').
+timestamp is a float representing the current time in seconds.
+'start' means the machine starts the process at the given timestamp and 'end' means the machine ends the process at the given timestamp.
+The 'start' timestamp will always be before the 'end' timestamp for every (machine_id, process_id) pair.
+ 
+There is a factory website that has several machines each running the same number of processes. Write an SQL query to find the average time each machine takes to complete a process.
+The time to complete a process is the 'end' timestamp minus the 'start' timestamp. The average time is calculated by the total time to complete every process on the machine divided by the number of processes that were run.
+The resulting table should have the machine_id along with the average time as processing_time, which should be rounded to 3 decimal places.
+The query result format is in the following example:
+
+Activity table:
++------------+------------+---------------+-----------+
+| machine_id | process_id | activity_type | timestamp |
++------------+------------+---------------+-----------+
+| 0          | 0          | start         | 0.712     |
+| 0          | 0          | end           | 1.520     |
+| 0          | 1          | start         | 3.140     |
+| 0          | 1          | end           | 4.120     |
+| 1          | 0          | start         | 0.550     |
+| 1          | 0          | end           | 1.550     |
+| 1          | 1          | start         | 0.430     |
+| 1          | 1          | end           | 1.420     |
+| 2          | 0          | start         | 4.100     |
+| 2          | 0          | end           | 4.512     |
+| 2          | 1          | start         | 2.500     |
+| 2          | 1          | end           | 5.000     |
++------------+------------+---------------+-----------+
+
+Result table:
++------------+-----------------+
+| machine_id | processing_time |
++------------+-----------------+
+| 0          | 0.894           |
+| 1          | 0.995           |
+| 2          | 1.456           |
++------------+-----------------+
+
+There are 3 machines running 2 processes each.
+Machine 0's average time is ((1.520 - 0.712) + (4.120 - 3.140)) / 2 = 0.894
+Machine 1's average time is ((1.550 - 0.550) + (1.420 - 0.430)) / 2 = 0.995
+Machine 2's average time is ((4.512 - 4.100) + (5.000 - 2.500)) / 2 = 1.456
+*/
+SELECT machine_id,
+ROUND((SUM(CASE WHEN activity_type = 'end' THEN timestamp END)- SUM(CASE WHEN activity_type = 'start' THEN timestamp END))/COUNT(DISTINCT process_id), 3) processing_time
+FROM Activity
+GROUP BY 1
+
+--1211. Queries Quality and Percentage
+/*
+Table: Queries
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| query_name  | varchar |
+| result      | varchar |
+| position    | int     |
+| rating      | int     |
++-------------+---------+
+There is no primary key for this table, it may have duplicate rows.
+This table contains information collected from some queries on a database.
+The position column has a value from 1 to 500.
+The rating column has a value from 1 to 5. Query with rating less than 3 is a poor query.
+
+We define query quality as:
+The average of the ratio between query rating and its position.
+We also define poor query percentage as:
+The percentage of all queries with rating less than 3.
+Write an SQL query to find each query_name, the quality and poor_query_percentage.
+Both quality and poor_query_percentage should be rounded to 2 decimal places.
+The query result format is in the following example:
+
+Queries table:
++------------+-------------------+----------+--------+
+| query_name | result            | position | rating |
++------------+-------------------+----------+--------+
+| Dog        | Golden Retriever  | 1        | 5      |
+| Dog        | German Shepherd   | 2        | 5      |
+| Dog        | Mule              | 200      | 1      |
+| Cat        | Shirazi           | 5        | 2      |
+| Cat        | Siamese           | 3        | 3      |
+| Cat        | Sphynx            | 7        | 4      |
++------------+-------------------+----------+--------+
+
+Result table:
++------------+---------+-----------------------+
+| query_name | quality | poor_query_percentage |
++------------+---------+-----------------------+
+| Dog        | 2.50    | 33.33                 |
+| Cat        | 0.66    | 33.33                 |
++------------+---------+-----------------------+
+
+Dog queries quality is ((5 / 1) + (5 / 2) + (1 / 200)) / 3 = 2.50
+Dog queries poor_ query_percentage is (1 / 3) * 100 = 33.33
+
+Cat queries quality equals ((2 / 5) + (3 / 3) + (4 / 7)) / 3 = 0.66
+Cat queries poor_ query_percentage is (1 / 3) * 100 = 33.33
+*/
+select 
+    query_name, 
+    round(sum(rating/position)/count(query_name),2) as quality, 
+    round((sum(case when rating <3 then 1 end)/count(query_name))*100,2) as poor_query_percentage
+from Queries
+group by query_name
+
+--1241. Number of Comments per Post
+/*Table: Submissions
+
++---------------+----------+
+| Column Name   | Type     |
++---------------+----------+
+| sub_id        | int      |
+| parent_id     | int      |
++---------------+----------+
+There is no primary key for this table, it may have duplicate rows.
+Each row can be a post or comment on the post.
+parent_id is null for posts.
+parent_id for comments is sub_id for another post in the table.
+ 
+
+Write an SQL query to find number of comments per each post.
+
+Result table should contain post_id and its corresponding number_of_comments, and must be sorted by post_id in ascending order.
+
+Submissions may contain duplicate comments. You should count the number of unique comments per post.
+
+Submissions may contain duplicate posts. You should treat them as one post.
+
+The query result format is in the following example:
+
+Submissions table:
++---------+------------+
+| sub_id  | parent_id  |
++---------+------------+
+| 1       | Null       |
+| 2       | Null       |
+| 1       | Null       |
+| 12      | Null       |
+| 3       | 1          |
+| 5       | 2          |
+| 3       | 1          |
+| 4       | 1          |
+| 9       | 1          |
+| 10      | 2          |
+| 6       | 7          |
++---------+------------+
+
+Result table:
++---------+--------------------+
+| post_id | number_of_comments |
++---------+--------------------+
+| 1       | 3                  |
+| 2       | 2                  |
+| 12      | 0                  |
++---------+--------------------+
+
+The post with id 1 has three comments in the table with id 3, 4 and 9. The comment with id 3 is repeated in the table, we counted it only once.
+The post with id 2 has two comments in the table with id 5 and 10.
+The post with id 12 has no comments in the table.
+The comment with id 6 is a comment on a deleted post with id 7 so we ignored it.*/
+select 
+    s1.sub_id as post_id,
+    count(distinct s2.sub_id) as number_of_comments
+from Submissions s1 
+left join Submissions s2 
+  on  s2.parent_id = s1.sub_id
+where s1.parent_id is null
+GROUP BY 1
+ 
+--1322. Ads Performance
+/*Table: Ads
+
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| ad_id         | int     |
+| user_id       | int     |
+| action        | enum    |
++---------------+---------+
+(ad_id, user_id) is the primary key for this table.
+Each row of this table contains the ID of an Ad, the ID of a user and the action taken by this user regarding this Ad.
+The action column is an ENUM type of ('Clicked', 'Viewed', 'Ignored').
+ 
+A company is running Ads and wants to calculate the performance of each Ad.
+Performance of the Ad is measured using Click-Through Rate (CTR) where:
+ctr = 0 if total_clicks + total_views = 0
+    = total_clicks/(total_clicks + total_views)
+
+Write an SQL query to find the ctr of each Ad.
+Round ctr to 2 decimal points. Order the result table by ctr in descending order and by ad_id in ascending order in case of a tie.
+The query result format is in the following example:
+
+Ads table:
++-------+---------+---------+
+| ad_id | user_id | action  |
++-------+---------+---------+
+| 1     | 1       | Clicked |
+| 2     | 2       | Clicked |
+| 3     | 3       | Viewed  |
+| 5     | 5       | Ignored |
+| 1     | 7       | Ignored |
+| 2     | 7       | Viewed  |
+| 3     | 5       | Clicked |
+| 1     | 4       | Viewed  |
+| 2     | 11      | Viewed  |
+| 1     | 2       | Clicked |
++-------+---------+---------+
+Result table:
++-------+-------+
+| ad_id | ctr   |
++-------+-------+
+| 1     | 66.67 |
+| 3     | 50.00 |
+| 2     | 33.33 |
+| 5     | 0.00  |
++-------+-------+
+for ad_id = 1, ctr = (2/(2+1)) * 100 = 66.67
+for ad_id = 2, ctr = (1/(1+2)) * 100 = 33.33
+for ad_id = 3, ctr = (1/(1+1)) * 100 = 50.00
+for ad_id = 5, ctr = 0.00, Note that ad_id = 5 has no clicks or views.
+Note that we don't care about Ignored Ads.
+Result table is ordered by the ctr. in case of a tie we order them by ad_id */
+SELECT 
+    ad_id, 
+    ROUND(IFNULL(SUM(IF(action='clicked',1,0))/SUM(IF(action='clicked' OR action='viewed',1,0))*100,0),2) AS ctr
+FROM Ads
+GROUP BY ad_id
+ORDER BY ctr DESC, ad_id
+
+--1141. User Activity for the Past 30 Days I
+/* Table: Activity
+
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| user_id       | int     |
+| session_id    | int     |
+| activity_date | date    |
+| activity_type | enum    |
++---------------+---------+
+There is no primary key for this table, it may have duplicate rows.
+The activity_type column is an ENUM of type ('open_session', 'end_session', 'scroll_down', 'send_message').
+The table shows the user activities for a social media website. 
+Note that each session belongs to exactly one user.
+ 
+
+Write an SQL query to find the daily active user count for a period of 30 days ending 2019-07-27 inclusively. A user was active on some day if he/she made at least one activity on that day.
+
+The query result format is in the following example:
+
+Activity table:
++---------+------------+---------------+---------------+
+| user_id | session_id | activity_date | activity_type |
++---------+------------+---------------+---------------+
+| 1       | 1          | 2019-07-20    | open_session  |
+| 1       | 1          | 2019-07-20    | scroll_down   |
+| 1       | 1          | 2019-07-20    | end_session   |
+| 2       | 4          | 2019-07-20    | open_session  |
+| 2       | 4          | 2019-07-21    | send_message  |
+| 2       | 4          | 2019-07-21    | end_session   |
+| 3       | 2          | 2019-07-21    | open_session  |
+| 3       | 2          | 2019-07-21    | send_message  |
+| 3       | 2          | 2019-07-21    | end_session   |
+| 4       | 3          | 2019-06-25    | open_session  |
+| 4       | 3          | 2019-06-25    | end_session   |
++---------+------------+---------------+---------------+
+
+Result table:
++------------+--------------+ 
+| day        | active_users |
++------------+--------------+ 
+| 2019-07-20 | 2            |
+| 2019-07-21 | 2            |
++------------+--------------+ 
+Note that we do not care about days with zero active users. */
+select 
+    activity_date as day, 
+    count(distinct user_id) as active_users 
+from Activity
+where datediff('2019-07-27', activity_date) <30
+group by activity_date
+
+		   
+		   
