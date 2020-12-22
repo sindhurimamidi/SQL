@@ -619,7 +619,7 @@ on a1.event_date >= a2.event_date
 and a1.player_id = a2.player_id
 group by  a1.player_id, a1.event_date	
 
---
+-- 550. Game Play Analysis IV
 /* Write an SQL query that reports the fraction of players that logged in again on the day after the day they first logged in, 
  rounded to 2 decimal places. In other words, you need to count the number of players that logged in for at least two consecutive days 
  starting from their first login date, then divide that number by the total number of players.
@@ -642,12 +642,13 @@ Result table:
 +-----------+
 Only the player with id 1 logged back in after the first day he had logged in so the answer is 1/3 = 0.33					 
 */
-SELECT ROUND(SUM(event_date = min_date + 1)/COUNT(DISTINCT player_id), 2) fraction
+SELECT 
+  ROUND(SUM(event_date = min_date + 1)/COUNT(DISTINCT player_id), 2) fraction
 FROM
 (SELECT 
    player_id, 
    event_date, 
-   MIN(event_date) OVER (Partition by player_id) min_date 
+   MIN(event_date) OVER (Partition by player_id) min_date --since first login date;
  FROM Activity) t
 
 --569. Median Employee Salary
@@ -714,11 +715,8 @@ where t.sequence in (even_count,odd_even_count)
 +---------------+---------+
 (sale_date,fruit) is the primary key for this table.
 This table contains the sales of "apples" and "oranges" sold each day.
-
 Write an SQL query to report the difference between number of apples and oranges sold each day.
-
 Return the result table ordered by sale_date in format ('YYYY-MM-DD').
-
 The query result format is in the following example:
 
 Sales table:
@@ -827,7 +825,6 @@ where rn=1
 	
 -- 1355. Activity Participants
 /* Table: Friends
-
 +---------------+---------+
 | Column Name   | Type    |
 +---------------+---------+
@@ -839,7 +836,6 @@ id is the id of the friend and primary key for this table.
 name is the name of the friend.
 activity is the name of the activity which the friend takes part in.
 Table: Activities
-
 +---------------+---------+
 | Column Name   | Type    |
 +---------------+---------+
@@ -848,12 +844,9 @@ Table: Activities
 +---------------+---------+
 id is the primary key for this table.
 name is the name of the activity.
- 
 
 Write an SQL query to find the names of all the activities with neither maximum, nor minimum number of participants.
-
 Return the result table in any order. Each activity in table Activities is performed by any person in the table Friends.
-
 The query result format is in the following example:
 
 Friends table:
@@ -943,7 +936,6 @@ ORDER BY 1 ASC;
 		   
 --Three most recent orders
 /*Table: Customers
-
 +---------------+---------+
 | Column Name   | Type    |
 +---------------+---------+
@@ -952,10 +944,8 @@ ORDER BY 1 ASC;
 +---------------+---------+
 customer_id is the primary key for this table.
 This table contains information about customers.
- 
 
 Table: Orders
-
 +---------------+---------+
 | Column Name   | Type    |
 +---------------+---------+
@@ -968,11 +958,9 @@ order_id is the primary key for this table.
 This table contains information about the orders made by customer_id.
 Each customer has one order per day.
  
-
 Write an SQL query to find the most recent 3 orders of each user. If a user ordered less than 3 orders return all of their orders.
-
-Return the result table sorted by customer_name in ascending order and in case of a tie by the customer_id in ascending order. If there still a tie, order them by the order_date in descending order.
-
+Return the result table sorted by customer_name in ascending order and in case of a tie by the customer_id in ascending order.
+If there still a tie, order them by the order_date in descending order.
 The query result format is in the following example:
 
 Customers
@@ -1167,16 +1155,12 @@ There is no primary key for this table, it may have duplicate rows.
 Each row can be a post or comment on the post.
 parent_id is null for posts.
 parent_id for comments is sub_id for another post in the table.
- 
 
 Write an SQL query to find number of comments per each post.
 
 Result table should contain post_id and its corresponding number_of_comments, and must be sorted by post_id in ascending order.
-
 Submissions may contain duplicate comments. You should count the number of unique comments per post.
-
 Submissions may contain duplicate posts. You should treat them as one post.
-
 The query result format is in the following example:
 
 Submissions table:
@@ -1330,6 +1314,574 @@ select
 from Activity
 where datediff('2019-07-27', activity_date) <30
 group by activity_date
+			
+--1142. User Activity for the Past 30 Days II
+/* Write an SQL query to find the average number of sessions per user for a period of 30 days ending 2019-07-27 inclusively, rounded to 2 decimal places.
+The sessions we want to count for a user are those with at least one activity in that time period. 
+Activity table:
++---------+------------+---------------+---------------+
+| user_id | session_id | activity_date | activity_type |
++---------+------------+---------------+---------------+
+| 1       | 1          | 2019-07-20    | open_session  |
+| 1       | 1          | 2019-07-20    | scroll_down   |
+| 1       | 1          | 2019-07-20    | end_session   |
+| 2       | 4          | 2019-07-20    | open_session  |
+| 2       | 4          | 2019-07-21    | send_message  |
+| 2       | 4          | 2019-07-21    | end_session   |
+| 3       | 2          | 2019-07-21    | open_session  |
+| 3       | 2          | 2019-07-21    | send_message  |
+| 3       | 2          | 2019-07-21    | end_session   |
+| 3       | 5          | 2019-07-21    | open_session  |
+| 3       | 5          | 2019-07-21    | scroll_down   |
+| 3       | 5          | 2019-07-21    | end_session   |
+| 4       | 3          | 2019-06-25    | open_session  |
+| 4       | 3          | 2019-06-25    | end_session   |
++---------+------------+---------------+---------------+
 
+Result table:
++---------------------------+ 
+| average_sessions_per_user |
++---------------------------+ 
+| 1.33                      |
++---------------------------+ 
+User 1 and 2 each had 1 session in the past 30 days while user 3 had 2 sessions so the average is (1 + 1 + 2) / 3 = 1.33.			
+*/
+select IFNULL(ROUND(COUNT(DISTINCT user_id,session_id)/COUNT(DISTINCT user_id),2),0) AS average_sessions_per_user 
+from Activity
+where datediff('2019-07-27',activity_date) <= 30
+
+-- 1076. Project Employees II
+/*Table: Project
+
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| project_id  | int     |
+| employee_id | int     |
++-------------+---------+
+(project_id, employee_id) is the primary key of this table.
+employee_id is a foreign key to Employee table.
+
+Table: Employee
++------------------+---------+
+| Column Name      | Type    |
++------------------+---------+
+| employee_id      | int     |
+| name             | varchar |
+| experience_years | int     |
++------------------+---------+
+employee_id is the primary key of this table.
+
+Write an SQL query that reports all the projects that have the most employees.
+The query result format is in the following example:
+Project table:
++-------------+-------------+
+| project_id  | employee_id |
++-------------+-------------+
+| 1           | 1           |
+| 1           | 2           |
+| 1           | 3           |
+| 2           | 1           |
+| 2           | 4           |
++-------------+-------------+
+
+Employee table:
++-------------+--------+------------------+
+| employee_id | name   | experience_years |
++-------------+--------+------------------+
+| 1           | Khaled | 3                |
+| 2           | Ali    | 2                |
+| 3           | John   | 1                |
+| 4           | Doe    | 2                |
++-------------+--------+------------------+
+
+Result table:
++-------------+
+| project_id  |
++-------------+
+| 1           |
++-------------+
+The first project has 3 employees while the second one has 2.*/
+SELECT project_id
+FROM project
+GROUP BY project_id
+HAVING COUNT(employee_id) =
+(
+    SELECT count(employee_id)
+    FROM project
+    GROUP BY project_id
+    ORDER BY count(employee_id) desc
+    LIMIT 1
+)
+			
+--597. Friend Requests I: Overall Acceptance Rate
+/*Table: FriendRequest
+
++----------------+---------+
+| Column Name    | Type    |
++----------------+---------+
+| sender_id      | int     |
+| send_to_id     | int     |
+| request_date   | date    |
++----------------+---------+
+There is no primary key for this table, it may contain duplicates.
+This table contains the ID of the user who sent the request, the ID of the user who received the request, and the date of the request.
+Table: RequestAccepted
+
++----------------+---------+
+| Column Name    | Type    |
++----------------+---------+
+| requester_id   | int     |
+| accepter_id    | int     |
+| accept_date    | date    |
++----------------+---------+
+There is no primary key for this table, it may contain duplicates.
+This table contains the ID of the user who sent the request, the ID of the user who received the request, and the date when the request was accepted.
+Write an SQL query to find the overall acceptance rate of requests, which is the number of acceptance divided by the number of requests. Return the answer rounded to 2 decimals places.
+
+Note that:
+The accepted requests are not necessarily from the table friend_request. In this case, you just need to simply count the total accepted requests (no matter whether they are in the original requests), and divide it by the number of requests to get the acceptance rate.
+It is possible that a sender sends multiple requests to the same receiver, and a request could be accepted more than once. In this case, the ‘duplicated’ requests or acceptances are only counted once.
+If there are no requests at all, you should return 0.00 as the accept_rate.
+The query result format is in the following example:
+
+FriendRequest table:
++-----------+------------+--------------+
+| sender_id | send_to_id | request_date |
++-----------+------------+--------------+
+| 1         | 2          | 2016/06/01   |
+| 1         | 3          | 2016/06/01   |
+| 1         | 4          | 2016/06/01   |
+| 2         | 3          | 2016/06/02   |
+| 3         | 4          | 2016/06/09   |
++-----------+------------+--------------+
+
+RequestAccepted table:
++--------------+-------------+-------------+
+| requester_id | accepter_id | accept_date |
++--------------+-------------+-------------+
+| 1            | 2           | 2016/06/03  |
+| 1            | 3           | 2016/06/08  |
+| 2            | 3           | 2016/06/08  |
+| 3            | 4           | 2016/06/09  |
+| 3            | 4           | 2016/06/10  |
++--------------+-------------+-------------+
+
+Result table:
++-------------+
+| accept_rate |
++-------------+
+| 0.8         |
++-------------+
+There are 4 unique accepted requests, and there are 5 requests in total. So the rate is 0.80.*/
+SELECT 
+    ROUND(IFNULL(
+                COUNT(DISTINCT requester_id, accepter_id) / 
+                COUNT(DISTINCT sender_id, send_to_id)
+              , 0)
+       , 2) AS accept_rate
+FROM FriendRequest, RequestAccepted;
 		   
-		   
+--1398. Customers Who Bought Products A and B but Not C
+/* Table: Customers
++---------------------+---------+
+| Column Name         | Type    |
++---------------------+---------+
+| customer_id         | int     |
+| customer_name       | varchar |
++---------------------+---------+
+customer_id is the primary key for this table.
+customer_name is the name of the customer.
+
+Table: Orders
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| order_id      | int     |
+| customer_id   | int     |
+| product_name  | varchar |
++---------------+---------+
+order_id is the primary key for this table.
+customer_id is the id of the customer who bought the product "product_name".
+ 
+Write an SQL query to report the customer_id and customer_name of customers who bought products "A", "B" but did not buy the product "C" since we want to recommend them buy this product.
+Return the result table ordered by customer_id.
+The query result format is in the following example.
+
+Customers table:
++-------------+---------------+
+| customer_id | customer_name |
++-------------+---------------+
+| 1           | Daniel        |
+| 2           | Diana         |
+| 3           | Elizabeth     |
+| 4           | Jhon          |
++-------------+---------------+
+
+Orders table:
++------------+--------------+---------------+
+| order_id   | customer_id  | product_name  |
++------------+--------------+---------------+
+| 10         |     1        |     A         |
+| 20         |     1        |     B         |
+| 30         |     1        |     D         |
+| 40         |     1        |     C         |
+| 50         |     2        |     A         |
+| 60         |     3        |     A         |
+| 70         |     3        |     B         |
+| 80         |     3        |     D         |
+| 90         |     4        |     C         |
++------------+--------------+---------------+
+
+Result table:
++-------------+---------------+
+| customer_id | customer_name |
++-------------+---------------+
+| 3           | Elizabeth     |
++-------------+---------------+
+Only the customer_id with id 3 bought the product A and B but not the product C.*/
+select a.customer_id, a.customer_name
+from customers a
+where customer_id in (select customer_id from orders where product_name = 'A') 
+and customer_id in (select customer_id from orders where product_name = 'B')
+and customer_id not in (select customer_id from orders where product_name = 'C')
+order by customer_id
+
+--1264. Page Recommendations
+/*Table: Friendship
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| user1_id      | int     |
+| user2_id      | int     |
++---------------+---------+
+(user1_id, user2_id) is the primary key for this table.
+Each row of this table indicates that there is a friendship relation between user1_id and user2_id.
+
+Table: Likes
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| user_id     | int     |
+| page_id     | int     |
++-------------+---------+
+(user_id, page_id) is the primary key for this table.
+Each row of this table indicates that user_id likes page_id.
+
+Write an SQL query to recommend pages to the user with user_id = 1 using the pages that your friends liked. It should not recommend pages you already liked.
+Return result table in any order without duplicates.
+The query result format is in the following example:
+
+Friendship table:
++----------+----------+
+| user1_id | user2_id |
++----------+----------+
+| 1        | 2        |
+| 1        | 3        |
+| 1        | 4        |
+| 2        | 3        |
+| 2        | 4        |
+| 2        | 5        |
+| 6        | 1        |
++----------+----------+
+Likes table:
++---------+---------+
+| user_id | page_id |
++---------+---------+
+| 1       | 88      |
+| 2       | 23      |
+| 3       | 24      |
+| 4       | 56      |
+| 5       | 11      |
+| 6       | 33      |
+| 2       | 77      |
+| 3       | 77      |
+| 6       | 88      |
++---------+---------+
+Result table:
++------------------+
+| recommended_page |
++------------------+
+| 23               |
+| 24               |
+| 56               |
+| 33               |
+| 77               |
++------------------+
+User one is friend with users 2, 3, 4 and 6.
+Suggested pages are 23 from user 2, 24 from user 3, 56 from user 3 and 33 from user 6.
+Page 77 is suggested from both user 2 and user 3.
+Page 88 is not suggested because user 1 already likes it.*/
+select distinct l.page_id as recommended_page
+from Likes l
+join Friendship f
+on f.user2_id = l.user_id or f.user1_id =l.user_id
+where (user1_id = 1 or user2_id = 1) 
+  and page_id not in (select distinct page_id from Likes where user_id = 1)
+  
+--602. Friend Requests II: Who Has the Most Friends
+/*Table request_accepted
++--------------+-------------+------------+
+| requester_id | accepter_id | accept_date|
+|--------------|-------------|------------|
+| 1            | 2           | 2016_06-03 |
+| 1            | 3           | 2016-06-08 |
+| 2            | 3           | 2016-06-08 |
+| 3            | 4           | 2016-06-09 |
++--------------+-------------+------------+
+This table holds the data of friend acceptance, while requester_id and accepter_id both are the id of a person.
+ 
+Write a query to find the the people who has most friends and the most friends number under the following rules:
+It is guaranteed there is only 1 people having the most friends.
+The friend request could only been accepted once, which mean there is no multiple records with the same requester_id and accepter_id value.
+For the sample data above, the result is:
+
+Result table:
++------+------+
+| id   | num  |
+|------|------|
+| 3    | 3    |
++------+------+
+The person with id '3' is a friend of people '1', '2' and '4', so he has 3 friends in total, which is the most number than any others.
+Follow-up:
+In the real world, multiple people could have the same most number of friends, can you find all these people in this case?*/
+select 
+    id1 as id, 
+    count(id2) as num
+from
+    (select requester_id as id1, accepter_id as id2 
+    from request_accepted
+    union
+    select accepter_id as id1, requester_id as id2 
+    from request_accepted) tmp1
+group by id1 
+order by num desc 
+limit 1
+
+--578. Get Highest Answer Rate Question
+/* 
+Get the highest answer rate question from a table survey_log with these columns: id, action, question_id, answer_id, q_num, timestamp.
+id means user id; action has these kind of values: "show", "answer", "skip"; answer_id is not null when action column is "answer", 
+while is null for "show" and "skip"; q_num is the numeral order of the question in current session.
+Write a sql query to identify the question which has the highest answer rate.
+
+Example:
+Input:
++------+-----------+--------------+------------+-----------+------------+
+| id   | action    | question_id  | answer_id  | q_num     | timestamp  |
++------+-----------+--------------+------------+-----------+------------+
+| 5    | show      | 285          | null       | 1         | 123        |
+| 5    | answer    | 285          | 124124     | 1         | 124        |
+| 5    | show      | 369          | null       | 2         | 125        |
+| 5    | skip      | 369          | null       | 2         | 126        |
++------+-----------+--------------+------------+-----------+------------+
+Output:
++-------------+
+| survey_log  |
++-------------+
+|    285      |
++-------------+
+Explanation:
+question 285 has answer rate 1/1, while question 369 has 0/1 answer rate, so output 285.
+Note: The highest answer rate meaning is: answer number's ratio in show number in the same question.*/
+select question_id as survey_log from survey_log
+group by question_id
+order by count(answer_id)/count(*) desc
+limit 1
+
+--1132. Reported Posts II
+/*
+Table: Actions
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| user_id       | int     |
+| post_id       | int     |
+| action_date   | date    |
+| action        | enum    |
+| extra         | varchar |
++---------------+---------+
+There is no primary key for this table, it may have duplicate rows.
+The action column is an ENUM type of ('view', 'like', 'reaction', 'comment', 'report', 'share').
+The extra column has optional information about the action such as a reason for report or a type of reaction. 
+Table: Removals
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| post_id       | int     |
+| remove_date   | date    | 
++---------------+---------+
+post_id is the primary key of this table.
+Each row in this table indicates that some post was removed as a result of being reported or as a result of an admin review.
+Write an SQL query to find the average for daily percentage of posts that got removed after being reported as spam, rounded to 2 decimal places.
+The query result format is in the following example:
+Actions table:
++---------+---------+-------------+--------+--------+
+| user_id | post_id | action_date | action | extra  |
++---------+---------+-------------+--------+--------+
+| 1       | 1       | 2019-07-01  | view   | null   |
+| 1       | 1       | 2019-07-01  | like   | null   |
+| 1       | 1       | 2019-07-01  | share  | null   |
+| 2       | 2       | 2019-07-04  | view   | null   |
+| 2       | 2       | 2019-07-04  | report | spam   |
+| 3       | 4       | 2019-07-04  | view   | null   |
+| 3       | 4       | 2019-07-04  | report | spam   |
+| 4       | 3       | 2019-07-02  | view   | null   |
+| 4       | 3       | 2019-07-02  | report | spam   |
+| 5       | 2       | 2019-07-03  | view   | null   |
+| 5       | 2       | 2019-07-03  | report | racism |
+| 5       | 5       | 2019-07-03  | view   | null   |
+| 5       | 5       | 2019-07-03  | report | racism |
++---------+---------+-------------+--------+--------+
+
+Removals table:
++---------+-------------+
+| post_id | remove_date |
++---------+-------------+
+| 2       | 2019-07-20  |
+| 3       | 2019-07-18  |
++---------+-------------+
+
+Result table:
++-----------------------+
+| average_daily_percent |
++-----------------------+
+| 75.00                 |
++-----------------------+
+The percentage for 2019-07-04 is 50% because only one post of two spam reported posts was removed.
+The percentage for 2019-07-02 is 100% because one post was reported as spam and it was removed.
+The other days had no spam reports so the average is (50 + 100) / 2 = 75%
+Note that the output is only one number and that we do not care about the remove dates.
+*/
+SELECT ROUND(AVG(cnt), 2) AS average_daily_percent 
+FROM
+  (SELECT (COUNT(DISTINCT r.post_id)/ COUNT(DISTINCT a.post_id))*100  AS cnt
+   FROM Actions a
+   LEFT JOIN Removals r
+   ON a.post_id = r.post_id
+   WHERE extra ='spam' and action = 'report'
+   GROUP BY action_date) tmp
+
+--614. Second Degree Follower
+/*In facebook, there is a follow table with two columns: followee, follower.
+Please write a sql query to get the amount of each follower’s follower if he/she has one.
+For example:
+
++-------------+------------+
+| followee    | follower   |
++-------------+------------+
+|     A       |     B      |
+|     B       |     C      |
+|     B       |     D      |
+|     D       |     E      |
++-------------+------------+
+should output:
++-------------+------------+
+| follower    | num        |
++-------------+------------+
+|     B       |  2         |
+|     D       |  1         |
++-------------+------------+
+Explaination:
+Both B and D exist in the follower list, when as a followee, B's follower is C and D, and D's follower is E. A does not exist in follower list.
+
+Note:
+Followee would not follow himself/herself in all cases.
+Please display the result in follower's alphabet order.*/
+select 
+    followee as follower,
+    count(distinct follower) as num
+from follow
+where followee in (Select follower from follow)
+group by 1
+order by 1
+	
+--1225. Report Contiguous Dates
+/*Table: Failed
+
++--------------+---------+
+| Column Name  | Type    |
++--------------+---------+
+| fail_date    | date    |
++--------------+---------+
+Primary key for this table is fail_date.
+Failed table contains the days of failed tasks.
+Table: Succeeded
+
++--------------+---------+
+| Column Name  | Type    |
++--------------+---------+
+| success_date | date    |
++--------------+---------+
+Primary key for this table is success_date.
+Succeeded table contains the days of succeeded tasks.
+
+A system is running one task every day. Every task is independent of the previous tasks. The tasks can fail or succeed.
+Write an SQL query to generate a report of period_state for each continuous interval of days in the period from 2019-01-01 to 2019-12-31.
+period_state is 'failed' if tasks in this interval failed or 'succeeded' if tasks in this interval succeeded. Interval of days are retrieved as start_date and end_date.
+
+Order result by start_date.
+
+The query result format is in the following example:
+
+Failed table:
++-------------------+
+| fail_date         |
++-------------------+
+| 2018-12-28        |
+| 2018-12-29        |
+| 2019-01-04        |
+| 2019-01-05        |
++-------------------+
+
+Succeeded table:
++-------------------+
+| success_date      |
++-------------------+
+| 2018-12-30        |
+| 2018-12-31        |
+| 2019-01-01        |
+| 2019-01-02        |
+| 2019-01-03        |
+| 2019-01-06        |
++-------------------+
+
+Result table:
++--------------+--------------+--------------+
+| period_state | start_date   | end_date     |
++--------------+--------------+--------------+
+| succeeded    | 2019-01-01   | 2019-01-03   |
+| failed       | 2019-01-04   | 2019-01-05   |
+| succeeded    | 2019-01-06   | 2019-01-06   |
++--------------+--------------+--------------+
+
+The report ignored the system state in 2018 as we care about the system in the period 2019-01-01 to 2019-12-31.
+From 2019-01-01 to 2019-01-03 all tasks succeeded and the system state was "succeeded".
+From 2019-01-04 to 2019-01-05 all tasks failed and system state was "failed".
+From 2019-01-06 to 2019-01-06 all tasks succeeded and system state was "succeeded".*/
+WITH combined as 
+(
+     SELECT 
+        fail_date as dt, 
+        'failed' as period_state,
+        DAYOFYEAR(fail_date) - row_number() over(ORDER BY fail_date) as period_group 
+     FROM 
+        Failed
+     WHERE fail_date BETWEEN '2019-01-01' AND '2019-12-31'
+     UNION ALL
+     SELECT 
+        success_date as dt, 
+        'succeeded' as period_state,
+        DAYOFYEAR(success_date) - row_number() over(ORDER BY success_date) as period_group 
+     FROM Succeeded
+     WHERE success_date BETWEEN '2019-01-01' AND '2019-12-31'  
+)
+SELECT 
+    period_state,
+    min(dt) as start_date,
+    max(dt) as end_date
+FROM combined
+GROUP BY period_state,period_group
+ORDER BY start_date
+	   
+	   
