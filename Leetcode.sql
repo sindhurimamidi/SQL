@@ -17,7 +17,9 @@ SQL tips:
  9. Where condition on 2 variables: a,b in (select a,b from table)
  10. LAG(col,1) over (partition by col2 order by col3 asc) --> LAG or LEAD
  11. Window functions: over() partion by -- order by -- etc.
- 12: CTE(common table expressions): With table_name as (select * from table) --> creates a view.
+ 12. SUM (marks) OVER (ORDER BY Primary_key) AS Running Total
+ 13. CTE(common table expressions): With table_name as (select * from table) --> creates a view.
+ 14. coalesce(a,0)--> gets the first non zero/null value.
 */
 
 --175. Combine Two Tables 
@@ -1883,5 +1885,241 @@ SELECT
 FROM combined
 GROUP BY period_state,period_group
 ORDER BY start_date
+	  
+--1635. Hopper Company Queries I
+/*
+Drivers
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| driver_id   | int     |
+| join_date   | date    |
++-------------+---------+
+driver_id is the primary key for this table.
+Each row of this table contains the driver's ID and the date they joined the Hopper company.
+
+Rides
++--------------+---------+
+| Column Name  | Type    |
++--------------+---------+
+| ride_id      | int     |
+| user_id      | int     |
+| requested_at | date    |
++--------------+---------+
+ride_id is the primary key for this table.
+Each row of this table contains the ID of a ride, the user's ID that requested it, and the day they requested it.
+There may be some ride requests in this table that were not accepted.
 	   
+AcceptedRides
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| ride_id       | int     |
+| driver_id     | int     |
+| ride_distance | int     |
+| ride_duration | int     |
++---------------+---------+
+ride_id is the primary key for this table.
+Each row of this table contains some information about an accepted ride.
+It is guaranteed that each accepted ride exists in the Rides table.
+ 
+Write an SQL query to report the following statistics for each month of 2020:
+The number of drivers currently with the Hopper company by the end of the month (active_drivers).
+The number of accepted rides in that month (accepted_rides).
+Return the result table ordered by month in ascending order, where month is the month's number (January is 1, February is 2, etc.).
+The query result format is in the following example.
+Drivers table:
++-----------+------------+
+| driver_id | join_date  |
++-----------+------------+
+| 10        | 2019-12-10 |
+| 8         | 2020-1-13  |
+| 5         | 2020-2-16  |
+| 7         | 2020-3-8   |
+| 4         | 2020-5-17  |
+| 1         | 2020-10-24 |
+| 6         | 2021-1-5   |
++-----------+------------+
+
+Rides table:
++---------+---------+--------------+
+| ride_id | user_id | requested_at |
++---------+---------+--------------+
+| 6       | 75      | 2019-12-9    |
+| 1       | 54      | 2020-2-9     |
+| 10      | 63      | 2020-3-4     |
+| 19      | 39      | 2020-4-6     |
+| 3       | 41      | 2020-6-3     |
+| 13      | 52      | 2020-6-22    |
+| 7       | 69      | 2020-7-16    |
+| 17      | 70      | 2020-8-25    |
+| 20      | 81      | 2020-11-2    |
+| 5       | 57      | 2020-11-9    |
+| 2       | 42      | 2020-12-9    |
+| 11      | 68      | 2021-1-11    |
+| 15      | 32      | 2021-1-17    |
+| 12      | 11      | 2021-1-19    |
+| 14      | 18      | 2021-1-27    |
++---------+---------+--------------+
+
+AcceptedRides table:
++---------+-----------+---------------+---------------+
+| ride_id | driver_id | ride_distance | ride_duration |
++---------+-----------+---------------+---------------+
+| 10      | 10        | 63            | 38            |
+| 13      | 10        | 73            | 96            |
+| 7       | 8         | 100           | 28            |
+| 17      | 7         | 119           | 68            |
+| 20      | 1         | 121           | 92            |
+| 5       | 7         | 42            | 101           |
+| 2       | 4         | 6             | 38            |
+| 11      | 8         | 37            | 43            |
+| 15      | 8         | 108           | 82            |
+| 12      | 8         | 38            | 34            |
+| 14      | 1         | 90            | 74            |
++---------+-----------+---------------+---------------+
+
+Result table:
++-------+----------------+----------------+
+| month | active_drivers | accepted_rides |
++-------+----------------+----------------+
+| 1     | 2              | 0              |
+| 2     | 3              | 0              |
+| 3     | 4              | 1              |
+| 4     | 4              | 0              |
+| 5     | 5              | 0              |
+| 6     | 5              | 1              |
+| 7     | 5              | 1              |
+| 8     | 5              | 1              |
+| 9     | 5              | 0              |
+| 10    | 6              | 0              |
+| 11    | 6              | 2              |
+| 12    | 6              | 1              |
++-------+----------------+----------------+
+
+By the end of January --> two active drivers (10, 8) and no accepted rides.
+By the end of February --> three active drivers (10, 8, 5) and no accepted rides.
+By the end of March --> four active drivers (10, 8, 5, 7) and one accepted ride (10).
+By the end of April --> four active drivers (10, 8, 5, 7) and no accepted rides.
+By the end of May --> five active drivers (10, 8, 5, 7, 4) and no accepted rides.
+By the end of June --> five active drivers (10, 8, 5, 7, 4) and one accepted ride (13).
+By the end of July --> five active drivers (10, 8, 5, 7, 4) and one accepted ride (7).
+By the end of August --> five active drivers (10, 8, 5, 7, 4) and one accepted ride (17).
+By the end of Septemeber --> five active drivers (10, 8, 5, 7, 4) and no accepted rides.
+By the end of October --> six active drivers (10, 8, 5, 7, 4, 1) and no accepted rides.
+By the end of November --> six active drivers (10, 8, 5, 7, 4, 1) and two accepted rides (20, 5).
+By the end of December --> six active drivers (10, 8, 5, 7, 4, 1) and one accepted ride (2).
+*/
 	   
+--1501. Countries You Can Safely Invest In
+/*
+Table Person:
++----------------+---------+
+| Column Name    | Type    |
++----------------+---------+
+| id             | int     |
+| name           | varchar |
+| phone_number   | varchar |
++----------------+---------+
+id is the primary key for this table.
+Each row of this table contains the name of a person and their phone number.
+Phone number will be in the form 'xxx-yyyyyyy' where xxx is the country code (3 characters) and yyyyyyy is the phone number (7 characters) where x and y are digits.
+Both can contain leading zeros.
+
+Table Country:
++----------------+---------+
+| Column Name    | Type    |
++----------------+---------+
+| name           | varchar |
+| country_code   | varchar |
++----------------+---------+
+country_code is the primary key for this table.
+Each row of this table contains the country name and its code. country_code will be in the form 'xxx' where x is digits.
+ 
+
+Table Calls:
++-------------+------+
+| Column Name | Type |
++-------------+------+
+| caller_id   | int  |
+| callee_id   | int  |
+| duration    | int  |
++-------------+------+
+There is no primary key for this table, it may contain duplicates.
+Each row of this table contains the caller id, callee id and the duration of the call in minutes. caller_id != callee_id
+A telecommunications company wants to invest in new countries. The company intends to invest in the countries where the average call duration of the calls in this country is strictly greater than the global average call duration.
+
+Write an SQL query to find the countries where this company can invest.
+Return the result table in any order.
+The query result format is in the following example.
+	   
+Person table:
++----+----------+--------------+
+| id | name     | phone_number |
++----+----------+--------------+
+| 3  | Jonathan | 051-1234567  |
+| 12 | Elvis    | 051-7654321  |
+| 1  | Moncef   | 212-1234567  |
+| 2  | Maroua   | 212-6523651  |
+| 7  | Meir     | 972-1234567  |
+| 9  | Rachel   | 972-0011100  |
++----+----------+--------------+
+
+Country table:
++----------+--------------+
+| name     | country_code |
++----------+--------------+
+| Peru     | 051          |
+| Israel   | 972          |
+| Morocco  | 212          |
+| Germany  | 049          |
+| Ethiopia | 251          |
++----------+--------------+
+
+Calls table:
++-----------+-----------+----------+
+| caller_id | callee_id | duration |
++-----------+-----------+----------+
+| 1         | 9         | 33       |
+| 2         | 9         | 4        |
+| 1         | 2         | 59       |
+| 3         | 12        | 102      |
+| 3         | 12        | 330      |
+| 12        | 3         | 5        |
+| 7         | 9         | 13       |
+| 7         | 1         | 3        |
+| 9         | 7         | 1        |
+| 1         | 7         | 7        |
++-----------+-----------+----------+
+
+Result table:
++----------+
+| country  |
++----------+
+| Peru     |
++----------+
+The average call duration for Peru is (102 + 102 + 330 + 330 + 5 + 5) / 6 = 145.666667
+The average call duration for Israel is (33 + 4 + 13 + 13 + 3 + 1 + 1 + 7) / 8 = 9.37500
+The average call duration for Morocco is (33 + 4 + 59 + 59 + 3 + 7) / 6 = 27.5000 
+Global call duration average = (2 * (33 + 3 + 59 + 102 + 330 + 5 + 13 + 3 + 1 + 7)) / 20 = 55.70000
+Since Peru is the only country where average call duration is greater than the global average, it's the only recommended country.
+*/
+with cte 
+as
+(
+    select c.name country, duration 
+    from Calls 
+    join Person on id = caller_id
+    join Country c on country_code = left(phone_number,3)
+    union all
+    select c.name country, duration 
+    from Calls 
+    join Person on id = callee_id
+    join Country c on country_code = left(phone_number,3)    
+)
+select country
+from cte
+group by country
+having avg(duration) > (select avg(duration) from cte)
+
+--
