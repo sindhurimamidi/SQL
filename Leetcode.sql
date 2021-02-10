@@ -2122,4 +2122,477 @@ from cte
 group by country
 having avg(duration) > (select avg(duration) from cte)
 
---
+--1107. New Users Daily Count
+/* Table: Traffic
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| user_id       | int     |
+| activity      | enum    |
+| activity_date | date    |
++---------------+---------+
+There is no primary key for this table, it may have duplicate rows.
+The activity column is an ENUM type of ('login', 'logout', 'jobs', 'groups', 'homepage').
+Write an SQL query that reports for every date within at most 90 days from today, the number of users that logged in for the first time on that date. Assume today is 2019-06-30.
+The query result format is in the following example:
+Traffic table:
++---------+----------+---------------+
+| user_id | activity | activity_date |
++---------+----------+---------------+
+| 1       | login    | 2019-05-01    |
+| 1       | homepage | 2019-05-01    |
+| 1       | logout   | 2019-05-01    |
+| 2       | login    | 2019-06-21    |
+| 2       | logout   | 2019-06-21    |
+| 3       | login    | 2019-01-01    |
+| 3       | jobs     | 2019-01-01    |
+| 3       | logout   | 2019-01-01    |
+| 4       | login    | 2019-06-21    |
+| 4       | groups   | 2019-06-21    |
+| 4       | logout   | 2019-06-21    |
+| 5       | login    | 2019-03-01    |
+| 5       | logout   | 2019-03-01    |
+| 5       | login    | 2019-06-21    |
+| 5       | logout   | 2019-06-21    |
++---------+----------+---------------+
+Result table:
++------------+-------------+
+| login_date | user_count  |
++------------+-------------+
+| 2019-05-01 | 1           |
+| 2019-06-21 | 2           |
++------------+-------------+
+Note that we only care about dates with non zero user count.
+The user with id 5 first logged in on 2019-03-01 so he's not counted on 2019-06-21.
+*/
+select login_date, count(user_id) as user_count
+from
+(select user_id, min(activity_date) as login_date
+from Traffic
+where activity = 'login'
+group by user_id) t
+where datediff('2019-06-30', login_date) <= 90
+group by login_date
+	   
+--1454. Active Users
+/* Table Accounts:
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| id            | int     |
+| name          | varchar |
++---------------+---------+
+the id is the primary key for this table.
+This table contains the account id and the user name of each account.
+Table Logins:
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| id            | int     |
+| login_date    | date    |
++---------------+---------+
+There is no primary key for this table, it may contain duplicates.
+This table contains the account id of the user who logged in and the login date. A user may log in multiple times in the day.
+Write an SQL query to find the id and the name of active users.
+Active users are those who logged in to their accounts for 5 or more consecutive days.
+Return the result table ordered by the id.
+The query result format is in the following example:
+Accounts table:
++----+----------+
+| id | name     |
++----+----------+
+| 1  | Winston  |
+| 7  | Jonathan |
++----+----------+
+
+Logins table:
++----+------------+
+| id | login_date |
++----+------------+
+| 7  | 2020-05-30 |
+| 1  | 2020-05-30 |
+| 7  | 2020-05-31 |
+| 7  | 2020-06-01 |
+| 7  | 2020-06-02 |
+| 7  | 2020-06-02 |
+| 7  | 2020-06-03 |
+| 1  | 2020-06-07 |
+| 7  | 2020-06-10 |
++----+------------+
+
+Result table:
++----+----------+
+| id | name     |
++----+----------+
+| 7  | Jonathan |
++----+----------+
+User Winston with id = 1 logged in 2 times only in 2 different days, so, Winston is not an active user.
+User Jonathan with id = 7 logged in 7 times in 6 different days, five of them were consecutive days, so, Jonathan is an active user. */
+	   
+SELECT DISTINCT a.id, (SELECT name FROM Accounts WHERE id=a.id) name
+FROM Logins a, Logins b
+WHERE a.id=b.id AND
+DATEDIFF(a.login_date,b.login_date) BETWEEN 1 AND 4
+GROUP BY a.id, a.login_date
+HAVING COUNT(DISTINCT b.login_date)=4
+	   
+--1398. Customers Who Bought Products A and B but Not C
+/*Table: Customers
++---------------------+---------+
+| Column Name         | Type    |
++---------------------+---------+
+| customer_id         | int     |
+| customer_name       | varchar |
++---------------------+---------+
+customer_id is the primary key for this table.
+customer_name is the name of the customer.
+Table: Orders
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| order_id      | int     |
+| customer_id   | int     |
+| product_name  | varchar |
++---------------+---------+
+order_id is the primary key for this table.
+customer_id is the id of the customer who bought the product "product_name".
+
+Write an SQL query to report the customer_id and customer_name of customers who bought products "A", "B" but did not buy the product "C" since we want to recommend them buy this product.
+Return the result table ordered by customer_id.
+The query result format is in the following example.
+
+Customers table:
++-------------+---------------+
+| customer_id | customer_name |
++-------------+---------------+
+| 1           | Daniel        |
+| 2           | Diana         |
+| 3           | Elizabeth     |
+| 4           | Jhon          |
++-------------+---------------+
+
+Orders table:
++------------+--------------+---------------+
+| order_id   | customer_id  | product_name  |
++------------+--------------+---------------+
+| 10         |     1        |     A         |
+| 20         |     1        |     B         |
+| 30         |     1        |     D         |
+| 40         |     1        |     C         |
+| 50         |     2        |     A         |
+| 60         |     3        |     A         |
+| 70         |     3        |     B         |
+| 80         |     3        |     D         |
+| 90         |     4        |     C         |
++------------+--------------+---------------+
+
+Result table:
++-------------+---------------+
+| customer_id | customer_name |
++-------------+---------------+
+| 3           | Elizabeth     |
++-------------+---------------+
+Only the customer_id with id 3 bought the product A and B but not the product C.*/
+select distinct customer_id, customer_name
+from Customers
+where customer_id in
+(
+    select customer_id
+    from Orders
+    where product_name='A'
+) and customer_id in
+(
+    select customer_id
+    from Orders
+    where product_name='B'
+) and customer_id not in
+(
+    select customer_id
+    from Orders
+    where product_name='C'
+)
+--1321. Restaurant Growth
+/*Table: Sales
+
++-------------+-------+
+| Column Name | Type  |
++-------------+-------+
+| sale_id     | int   |
+| product_id  | int   |
+| year        | int   |
+| quantity    | int   |
+| price       | int   |
++-------------+-------+
+sale_id is the primary key of this table.
+product_id is a foreign key to Product table.
+Note that the price is per unit.
+Table: Product
+
++--------------+---------+
+| Column Name  | Type    |
++--------------+---------+
+| product_id   | int     |
+| product_name | varchar |
++--------------+---------+
+product_id is the primary key of this table.
+ 
+
+Write an SQL query that selects the product id, year, quantity, and price for the first year of every product sold.
+
+The query result format is in the following example:
+
+Sales table:
++---------+------------+------+----------+-------+
+| sale_id | product_id | year | quantity | price |
++---------+------------+------+----------+-------+ 
+| 1       | 100        | 2008 | 10       | 5000  |
+| 2       | 100        | 2009 | 12       | 5000  |
+| 7       | 200        | 2011 | 15       | 9000  |
++---------+------------+------+----------+-------+
+
+Product table:
++------------+--------------+
+| product_id | product_name |
++------------+--------------+
+| 100        | Nokia        |
+| 200        | Apple        |
+| 300        | Samsung      |
++------------+--------------+
+
+Result table:
++------------+------------+----------+-------+
+| product_id | first_year | quantity | price |
++------------+------------+----------+-------+ 
+| 100        | 2008       | 10       | 5000  |
+| 200        | 2011       | 15       | 9000  |
++------------+------------+----------+-------+*/
+SELECT 
+    A.AVO AS visited_on, 
+    ROUND(sum(b.day_sum_2),2) AS amount , 
+    ROUND(avg(b.day_Sum_2),2) AS average_amount
+FROM
+    (SELECT visited_on AS avo, sum(amount) AS day_sum_1
+    FROM Customer
+    GROUP BY visited_on) a
+LEFT JOIN
+    (SELECT visited_on AS bvo, sum(amount) AS day_sum_2
+    FROM Customer
+    GROUP BY visited_on) b
+ON DATEDIFF(a.avo, b.bvo) < 7 AND 0 <= DATEDIFF(a.avo, b.bvo)
+GROUP by A.AVO
+HAVING COUNT(b.bvo) = 7
+	   
+--1045. Customers Who Bought All Products
+/*Table: Customer
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| customer_id | int     |
+| product_key | int     |
++-------------+---------+
+product_key is a foreign key to Product table.
+Table: Product
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| product_key | int     |
++-------------+---------+
+product_key is the primary key column for this table.
+*/
+select customer_id
+from customer c
+group by customer_id
+having count(distinct product_key) = (select count(*) from product)
+	
+--1613. Find the Missing IDs
+/*Table: Customers
+
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| customer_id   | int     |
+| customer_name | varchar |
++---------------+---------+
+customer_id is the primary key for this table.
+Each row of this table contains the name and the id customer.
+ 
+
+Write an SQL query to find the missing customer IDs. The missing IDs are ones that are not in the Customers table but are in the range between 1 and the maximum customer_id present in the table.
+
+Notice that the maximum customer_id will not exceed 100.
+
+Return the result table ordered by ids in ascending order.
+
+The query result format is in the following example.
+
+ 
+
+Customers table:
++-------------+---------------+
+| customer_id | customer_name |
++-------------+---------------+
+| 1           | Alice         |
+| 4           | Bob           |
+| 5           | Charlie       |
++-------------+---------------+
+
+Result table:
++-----+
+| ids |
++-----+
+| 2   |
+| 3   |
++-----+
+The maximum customer_id present in the table is 5, so in the range [1,5], IDs 2 and 3 are missing from the table.*/
+WITH RECURSIVE id_seq AS (
+    SELECT 1 as continued_id
+    UNION 
+    SELECT continued_id + 1
+    FROM id_seq
+    WHERE continued_id < (SELECT MAX(customer_id) FROM Customers) 
+)
+
+SELECT continued_id AS ids
+FROM id_seq
+WHERE continued_id NOT IN (SELECT customer_id FROM Customers)  
+	   
+--1421. NPV Queries
+/* Table: NPV
+
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| id            | int     |
+| year          | int     |
+| npv           | int     |
++---------------+---------+
+(id, year) is the primary key of this table.
+The table has information about the id and the year of each inventory and the corresponding net present value.
+ 
+
+Table: Queries
+
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| id            | int     |
+| year          | int     |
++---------------+---------+
+(id, year) is the primary key of this table.
+The table has information about the id and the year of each inventory query.
+ 
+
+Write an SQL query to find the npv of all each query of queries table.
+
+Return the result table in any order.
+
+The query result format is in the following example:
+
+NPV table:
++------+--------+--------+
+| id   | year   | npv    |
++------+--------+--------+
+| 1    | 2018   | 100    |
+| 7    | 2020   | 30     |
+| 13   | 2019   | 40     |
+| 1    | 2019   | 113    |
+| 2    | 2008   | 121    |
+| 3    | 2009   | 12     |
+| 11   | 2020   | 99     |
+| 7    | 2019   | 0      |
++------+--------+--------+
+
+Queries table:
++------+--------+
+| id   | year   |
++------+--------+
+| 1    | 2019   |
+| 2    | 2008   |
+| 3    | 2009   |
+| 7    | 2018   |
+| 7    | 2019   |
+| 7    | 2020   |
+| 13   | 2019   |
++------+--------+
+
+Result table:
++------+--------+--------+
+| id   | year   | npv    |
++------+--------+--------+
+| 1    | 2019   | 113    |
+| 2    | 2008   | 121    |
+| 3    | 2009   | 12     |
+| 7    | 2018   | 0      |
+| 7    | 2019   | 0      |
+| 7    | 2020   | 30     |
+| 13   | 2019   | 40     |
++------+--------+--------+
+
+The npv value of (7, 2018) is not present in the NPV table, we consider it 0.
+The npv values of all other queries can be found in the NPV table. */
+
+select q.id,q.year,coalesce(npv,0) as npv
+from queries q 
+left join npv n
+on n.id=q.id and n.year=q.year
+order by q.id,q.year
+	   
+--1699. Number of Calls Between Two Persons
+/*Table: Calls
+
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| from_id     | int     |
+| to_id       | int     |
+| duration    | int     |
++-------------+---------+
+This table does not have a primary key, it may contain duplicates.
+This table contains the duration of a phone call between from_id and to_id.
+from_id != to_id
+ 
+
+Write an SQL query to report the number of calls and the total call duration between each pair of distinct persons (person1, person2) where person1 < person2.
+
+Return the result table in any order.
+
+The query result format is in the following example:
+
+ 
+
+Calls table:
++---------+-------+----------+
+| from_id | to_id | duration |
++---------+-------+----------+
+| 1       | 2     | 59       |
+| 2       | 1     | 11       |
+| 1       | 3     | 20       |
+| 3       | 4     | 100      |
+| 3       | 4     | 200      |
+| 3       | 4     | 200      |
+| 4       | 3     | 499      |
++---------+-------+----------+
+
+Result table:
++---------+---------+------------+----------------+
+| person1 | person2 | call_count | total_duration |
++---------+---------+------------+----------------+
+| 1       | 2       | 2          | 70             |
+| 1       | 3       | 1          | 20             |
+| 3       | 4       | 4          | 999            |
++---------+---------+------------+----------------+
+Users 1 and 2 had 2 calls and the total duration is 70 (59 + 11).
+Users 1 and 3 had 1 call and the total duration is 20.
+Users 3 and 4 had 4 calls and the total duration is 999 (100 + 200 + 200 + 499).*/
+WITH CTE AS (
+    SELECT to_id person1, from_id person2, duration
+    FROM Calls
+    WHERE from_id > to_id 
+    UNION ALL
+    SELECT from_id person1, to_id person2, duration
+    FROM Calls
+    WHERE from_id < to_id)
+
+SELECT person1, person2, COUNT(person1) call_count , SUM(duration) total_duration 
+FROM CTE
+GROUP BY person1, person2 
