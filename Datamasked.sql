@@ -146,22 +146,19 @@ all_students : student_id | school_id | grade_level | date_of_birth | hometown
 1. What percent of students attend school on their birthday?
 2. Which grade level had the largest drop in attendance between yesterday and today?
 */
-select sum(case when a.date_of_birth = e.date then 1 else 0)/count(*)
+select sum(case when month(a.date_of_birth) = month(e.date) and day(a.date_of_birth) = day(e.date) then 1 else 0)/count(*)
 from all_students a
 join attendance_events e on a.student_id = e.student_id
+where attendance = 'present'
 
-SELECT date, grade, today, yesterday
-FROM 
-    (SELECT 
-       a.date, 
-       s.grade, 
-       COUNT(a.attendance) today, 
-       LAG(COUNT(a.attendance), 1) OVER (PARTITION BY grade ORDER BY date) yesterday
-     FROM attendance a JOIN students s ON a.student_id = s.student_id     
-     WHERE a.attendance = 'present' 
-       AND a.date >= DATE_SUB(DATE(NOW()), INTERVAL 1 DAY) -- Yesterday will be NULL for previous date.     
-     GROUP BY a.date, s.grade) last_2_days 
-WHERE date = date(now()) -- To remove the yesterday's NULL date
-ORDER BY yesterday - today -- Drop in attendance
-LIMIT 1;
+select grade_level,
+	iff(date = current_date - interval '1 day' , student_id, null) as count_attended_yesterday,
+	iff(date = current_date, student_id, null) as count_attended_today,
+	count_attended_yesterday - count_attended_today as drop_yesterday_to_today
+from attendance_events e
+	Join all_students s on s.student_id = e.student_id
+where attendance = 'present'
+group by 1
+order by 3 desc;
+
 
