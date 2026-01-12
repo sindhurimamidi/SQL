@@ -2649,3 +2649,85 @@ select min(log_id) start_id,
        max(log_id) end_id
 from cte
 group by Grp
+
+/* NETFLIX
+Given tables :  
+product_sales(product_id, units_sold, customer_id, ..)
+price_change_history(store_id, first date, last_date, price)
+sales(sales_id,product_id,promotion_id,..)
+stores(sales_id, store_id, state) 
+*/
+	
+/* 1. Get the fraction of products not sold in washington */
+WITH sold_in_wa AS (
+    SELECT DISTINCT ps.product_id
+    FROM product_sales ps
+    JOIN stores s ON ps.sales_id = s.sales_id
+    WHERE s.state = 'WA'
+)
+SELECT 
+    1.0 - COUNT(sw.product_id) * 1.0 / COUNT(p.product_id) AS fraction_not_sold_in_wa
+FROM product p
+LEFT JOIN sold_in_wa sw
+    ON p.product_id = sw.product_id;
+
+/* 2. price change over time */
+SELECT
+    store_id,
+    first_date,
+    last_date,
+    price,
+    price - LAG(price) OVER (
+        PARTITION BY store_id
+        ORDER BY first_date
+    ) AS price_change
+FROM price_change_history;
+
+/* 3. the most used promotion in the state california */
+SELECT
+    sa.promotion_id,
+    COUNT(*) AS usage_count
+FROM sales sa
+JOIN stores st
+    ON sa.sales_id = st.sales_id
+WHERE st.state = 'CA'
+GROUP BY sa.promotion_id
+ORDER BY usage_count DESC
+LIMIT 1;
+
+/* Linkedin 
+1. Home feed - how do you design experiment ?
+2. New chatbot feature - How do you design and define success metrics, how to make sure you prioritize one over other?
+ 
+--coach_usage table sample records:
+
+| learner_id  | conversation_id  | message_id  | datepartition |
+|-------------|------------------|-------------|---------------|
+| 1001        | conv_001         | msg_001     | 2024-05-01    |
+| 1001        | conv_001         | msg_002     | 2024-05-01    |
+| 1001        | conv_001         | msg_003     | 2024-05-02    |
+| 1002        | conv_002         | msg_104     | 2024-05-02    |
+| 1002        | conv_003         | msg_105     | 2024-05-03    |
+
+--coach_feedback table sample records:
+
+| conversation_id  | feedback |
+|------------------|----------|
+| conv_001         | 1        |
+| conv_006         | 0        |
+| conv_063         | 1        |
+| conv_094         | 0        |
+| conv_105         | 1        |
+
+question 1: 
+Write a SQL query to show me the distribution of conversation lengths.  Conversation length is based on the number of messages per conversation.  I want to know what % of conversations fall under each conversation length as well. */
+
+Select 
+	c.conversation_length, 
+	round(count((c.conversation_length)*100/count(distinct cu.*))100,2)
+from
+	(select conversation_id , count(message_id ) as conversation_length
+	from coach_usage
+	group by conversation_id ) c
+join coach_usage cu on c.conversation_id  = cu.conversation_id 
+group by c.conversation_length
