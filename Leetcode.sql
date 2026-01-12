@@ -2731,3 +2731,71 @@ from
 	group by conversation_id ) c
 join coach_usage cu on c.conversation_id  = cu.conversation_id 
 group by c.conversation_length
+
+
+/* For each step in a funnel, what fraction of users drop off at that step?
+events(user_id, event_name, event_time)
+event_name - visited, signed_up,purchased
+*/
+	
+WITH funnel AS (
+    SELECT
+        user_id,
+        MAX(CASE WHEN event_name = 'visit' THEN 1 END) AS visited,
+        MAX(CASE WHEN event_name = 'signup' THEN 1 END) AS signed_up,
+        MAX(CASE WHEN event_name = 'purchase' THEN 1 END) AS purchased
+    FROM events
+    GROUP BY user_id
+)
+SELECT
+    SUM(visited) AS visit_users,
+    SUM(signed_up) * 1.0 / SUM(visited) AS visit_to_signup,
+    SUM(purchased) * 1.0 / SUM(signed_up) AS signup_to_purchase
+FROM funnel;
+
+
+/*
+What % of users in the treatment group improved their metric compared to control?
+experiment_assignments(user_id, group)
+metrics(user_id, metric_value, date)
+*/
+-- Step 1: Compute pre and post metric per user
+WITH pre_post AS (
+    SELECT
+        m.user_id,
+        MAX(CASE WHEN m.date < '2024-02-01' THEN m.metric_value END) AS pre_metric,
+        MAX(CASE WHEN m.date >= '2024-02-01' THEN m.metric_value END) AS post_metric
+    FROM metrics m
+    GROUP BY m.user_id
+)
+
+-- Step 2: Join with experiment assignments and compute % improved
+SELECT
+    e.group,
+    SUM(CASE WHEN p.post_metric > p.pre_metric THEN 1 ELSE 0 END) * 1.0
+    / COUNT(*) AS pct_users_improved
+FROM experiment_assignments e
+JOIN pre_post p
+ON e.user_id = p.user_id
+GROUP BY e.group;
+
+/* What fraction of total revenue comes from the top 10% of users?
+payments(user_id, amount) */
+WITH user_revenue AS (
+    SELECT
+        user_id,
+        SUM(amount) AS total_revenue
+    FROM payments
+    GROUP BY user_id
+),
+ranked AS (
+    SELECT
+        user_id,
+        total_revenue,
+        NTILE(10) OVER (ORDER BY total_revenue DESC) AS decile
+    FROM user_revenue
+)
+SELECT
+    SUM(CASE WHEN decile = 1 THEN total_revenue ELSE 0 END) * 1.0
+    / SUM(total_revenue) AS top_10_pct_revenue_share
+FROM ranked;
