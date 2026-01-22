@@ -20,6 +20,16 @@ SQL tips:
  12. SUM (marks) OVER (ORDER BY Primary_key) AS Running Total
  13. CTE(common table expressions): With table_name as (select * from table) --> creates a view.
  14. coalesce(a,0)--> gets the first non zero/null value.
+ 15. Dates: now(), current_date, DATE_ADD(now(),interval 1 week);
+            date_part('epoch','2019-12-09'), dayofweek('2019-12-12');
+			datediff(end,start), year(date), month(date)
+ 16. Running total : SUM(orders) OVER (ORDER BY order_date )
+ 17. Moving Avg over 7 days 
+    AVG(orders) OVER (
+    ORDER BY order_date
+    ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+)
+
 */
 
 --175. Combine Two Tables 
