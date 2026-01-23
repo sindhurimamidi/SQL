@@ -18,13 +18,19 @@ SQL tips:
  10. LAG(col,1) over (partition by col2 order by col3 asc) --> LAG or LEAD
  11. Window functions: over() partion by -- order by -- etc.
  12. SUM (marks) OVER (ORDER BY Primary_key) AS Running Total
- 13. CTE(common table expressions): With table_name as (select * from table) --> creates a view.
- 14. coalesce(a,0)--> gets the first non zero/null value.
- 15. Dates: now(), current_date, DATE_ADD(now(),interval 1 week);
-            date_part('epoch','2019-12-09'), dayofweek('2019-12-12');
-			datediff(end,start), year(date), month(date)
- 16. Running total : SUM(orders) OVER (ORDER BY order_date )
- 17. Moving Avg over 7 days 
+ 13. NTILE(split_number) over (order by a) 
+	  eg:  NTILE(4) OVER (ORDER BY SUM(order_total) ASC) AS quartile
+		   NTILE(10) OVER (ORDER BY total_revenue DESC) AS decile
+ 14. CTE(common table expressions): With table_name as (select * from table) --> creates a view.
+ 15. coalesce(a,0)--> gets the first non zero/null value.
+ 16. Dates: now(), current_date, 
+     DATE_ADD(now(),interval 1 week);
+     date_part('epoch','2019-12-09'), 
+     dayofweek('2019-12-12');
+	 datediff(end,start), year(date), month(date)
+     DATE_FORMAT(field, '%Y-%m')
+ 17. Running total : SUM(orders) OVER (ORDER BY order_date )
+ 18. Moving Avg over 7 days 
     AVG(orders) OVER (
     ORDER BY order_date
     ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
